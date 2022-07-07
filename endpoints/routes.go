@@ -5,7 +5,9 @@ import (
 	"github.com/modhanami/boinger/models"
 	"github.com/modhanami/boinger/services"
 	"net/http"
+	"os"
 	"strconv"
+	"time"
 )
 
 func MakeListEndpoint(s services.BoingService) gin.HandlerFunc {
@@ -62,6 +64,8 @@ func MakeGetByIdEndpoint(s services.BoingService) gin.HandlerFunc {
 	}
 }
 
+var AuthTokenCookieName = "auth_token"
+
 func MakeLoginEndpoint(s services.AuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		username := c.PostForm("username")
@@ -72,7 +76,15 @@ func MakeLoginEndpoint(s services.AuthService) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, NewUserTokenResponse(userToken))
+		now := time.Now()
+		oneYearFromNow := now.AddDate(1, 0, 0)
+		maxAge := int(oneYearFromNow.Sub(now).Seconds())
+
+		disableSecureCookiesEnv := os.Getenv("SECURE_COOKIES_DISABLED")
+		secure := disableSecureCookiesEnv != "true"
+
+		c.SetCookie(AuthTokenCookieName, userToken, maxAge, "/", "", secure, true)
+		c.Status(http.StatusOK)
 	}
 }
 

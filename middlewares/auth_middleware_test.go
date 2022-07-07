@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/modhanami/boinger/endpoints"
 	"github.com/modhanami/boinger/models"
 	"github.com/modhanami/boinger/services"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +37,10 @@ func TestVerifyJWTUserTokenMiddleware_Authenticated(t *testing.T) {
 
 	recorder := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/", nil)
-	request.Header.Set("Authorization", "Bearer "+validToken)
+	request.AddCookie(&http.Cookie{
+		Name:  endpoints.AuthTokenCookieName,
+		Value: validToken,
+	})
 	router.ServeHTTP(recorder, request)
 
 	assert.Equal(t, http.StatusOK, recorder.Code)
@@ -64,13 +68,16 @@ func TestVerifyJWTUserTokenMiddleware_SetUserId(t *testing.T) {
 
 	recorder := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/", nil)
-	request.Header.Set("Authorization", "Bearer "+validToken)
+	request.AddCookie(&http.Cookie{
+		Name:  endpoints.AuthTokenCookieName,
+		Value: validToken,
+	})
 	router.ServeHTTP(recorder, request)
 
 	assert.Equal(t, http.StatusOK, recorder.Code)
 }
 
-func TestVerifyJWTUserTokenMiddleware_InvalidAuthHeader(t *testing.T) {
+func TestVerifyJWTUserTokenMiddleware_InvalidAuthCookie(t *testing.T) {
 	router := makeRouter()
 	userTokenService := services.NewUserTokenService()
 	userTokenMiddleware := MakeVerifyJWTUserTokenMiddleware(userTokenService)
@@ -80,29 +87,16 @@ func TestVerifyJWTUserTokenMiddleware_InvalidAuthHeader(t *testing.T) {
 
 	recorder := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/", nil)
-	request.Header.Set("Authorization", "Bearer invalid")
-	router.ServeHTTP(recorder, request)
-
-	assert.Equal(t, http.StatusUnauthorized, recorder.Code)
-}
-
-func TestVerifyJWTUserTokenMiddleware_InvalidAuthScheme(t *testing.T) {
-	router := makeRouter()
-	userTokenService := services.NewUserTokenService()
-	userTokenMiddleware := MakeVerifyJWTUserTokenMiddleware(userTokenService)
-	router.GET("/", userTokenMiddleware, func(c *gin.Context) {
-		t.FailNow()
+	request.AddCookie(&http.Cookie{
+		Name:  endpoints.AuthTokenCookieName,
+		Value: "invalid",
 	})
-
-	recorder := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", "/", nil)
-	request.Header.Set("Authorization", "invalid")
 	router.ServeHTTP(recorder, request)
 
 	assert.Equal(t, http.StatusUnauthorized, recorder.Code)
 }
 
-func TestVerifyJWTUserTokenMiddleware_EmptyAuthHeader(t *testing.T) {
+func TestVerifyJWTUserTokenMiddleware_EmptyAuthCookie(t *testing.T) {
 	router := makeRouter()
 	userTokenService := services.NewUserTokenService()
 	userTokenMiddleware := MakeVerifyJWTUserTokenMiddleware(userTokenService)
