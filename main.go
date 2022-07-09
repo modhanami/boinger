@@ -26,14 +26,15 @@ func main() {
 	authGroup := router.Group("/auth")
 	authGroup.POST("/register", endpoints.MakeRegisterEndpoint(authService))
 	authGroup.POST("/login", endpoints.MakeLoginEndpoint(authService))
+	authGroup.GET("/user-info", userTokenMiddleware, endpoints.MakeUserInfoEndpoint())
 
 	router.GET("/boings", endpoints.MakeListEndpoint(boingService))
 	router.GET("/boings/:id", endpoints.MakeGetByIdEndpoint(boingService))
-	router.POST("/boings", endpoints.MakeCreateEndpoint(boingService))
+	router.POST("/boings", userTokenMiddleware, endpoints.MakeCreateEndpoint(boingService))
 
 	router.POST("/dont-mind-me-boinging-around", userTokenMiddleware, func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"userId": c.GetString(middlewares.UserIdKey),
+			"userId": c.GetString(endpoints.UserIdKey),
 		})
 	})
 

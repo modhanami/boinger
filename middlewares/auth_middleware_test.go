@@ -25,7 +25,7 @@ func TestVerifyJWTUserTokenMiddleware_Authenticated(t *testing.T) {
 		c.Status(http.StatusOK)
 	})
 
-	validToken, err := userTokenService.Create(&models.UserModel{
+	validToken, _, err := userTokenService.Create(&models.UserModel{
 		Uid: "test",
 	}, services.CreateOptions{
 		Exp: time.Now().Add(time.Hour),
@@ -51,12 +51,12 @@ func TestVerifyJWTUserTokenMiddleware_SetUserId(t *testing.T) {
 	userTokenService := services.NewUserTokenService()
 	userTokenMiddleware := MakeVerifyJWTUserTokenMiddleware(userTokenService)
 	router.GET("/", userTokenMiddleware, func(c *gin.Context) {
-		userId := c.MustGet(UserIdKey).(string)
+		userId := c.MustGet(endpoints.UserIdKey).(string)
 		assert.Equal(t, "test", userId)
 		c.Status(http.StatusOK)
 	})
 
-	validToken, err := userTokenService.Create(&models.UserModel{
+	validToken, _, err := userTokenService.Create(&models.UserModel{
 		Uid: "test",
 	}, services.CreateOptions{
 		Exp: time.Now().Add(time.Hour),

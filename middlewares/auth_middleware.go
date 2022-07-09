@@ -7,8 +7,6 @@ import (
 	"net/http"
 )
 
-var UserIdKey = "userId"
-
 func MakeVerifyJWTUserTokenMiddleware(s services.UserTokenService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authTokenCookie, err := c.Request.Cookie(endpoints.AuthTokenCookieName)
@@ -25,6 +23,7 @@ func MakeVerifyJWTUserTokenMiddleware(s services.UserTokenService) gin.HandlerFu
 			return
 		}
 
-		c.Set(UserIdKey, claims.Uid)
+		c.Set(endpoints.UserIdKey, claims.Uid)
+		c.Set(endpoints.UserClaimsKey, claims)
 	}
 }

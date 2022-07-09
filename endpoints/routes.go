@@ -10,6 +10,9 @@ import (
 	"time"
 )
 
+var UserClaimsKey = "userClaims"
+var UserIdKey = "userId"
+
 func MakeListEndpoint(s services.BoingService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		boings, err := s.List()
@@ -66,11 +69,23 @@ func MakeGetByIdEndpoint(s services.BoingService) gin.HandlerFunc {
 
 var AuthTokenCookieName = "auth_token"
 
+type UserClaimsResponse struct {
+	Uid      string `json:"uid"`
+	Username string `json:"username"`
+}
+
+func NewUserClaimsResponseFromClaims(claims *services.UserClaims) *UserClaimsResponse {
+	return &UserClaimsResponse{
+		Uid:      claims.Uid,
+		Username: claims.Username,
+	}
+}
+
 func MakeLoginEndpoint(s services.AuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		username := c.PostForm("username")
 		password := c.PostForm("password")
-		userToken, err := s.Login(username, password)
+		userToken, claims, err := s.Login(username, password)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, ErrorResponseFromError(err))
 			return
@@ -84,7 +99,7 @@ func MakeLoginEndpoint(s services.AuthService) gin.HandlerFunc {
 		secure := disableSecureCookiesEnv != "true"
 
 		c.SetCookie(AuthTokenCookieName, userToken, maxAge, "/", "", secure, true)
-		c.Status(http.StatusOK)
+		c.JSON(http.StatusOK, NewUserClaimsResponseFromClaims(&claims))
 	}
 }
 
@@ -106,5 +121,18 @@ func MakeRegisterEndpoint(s services.AuthService) gin.HandlerFunc {
 		}
 
 		c.Status(http.StatusCreated)
+	}
+}
+
+func MakeUserInfoEndpoint() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		rawClaims, exists := c.Get(UserClaimsKey)
+		if !exists {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+
+		claims := rawClaims.(services.UserClaims)
+		c.JSON(http.StatusOK, NewUserClaimsResponseFromClaims(&claims))
 	}
 }

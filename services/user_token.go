@@ -8,8 +8,8 @@ import (
 )
 
 type UserTokenService interface {
-	Create(user *models.UserModel, options CreateOptions) (UserToken, error)
-	Verify(token string) (Claims, error)
+	Create(user *models.UserModel, options CreateOptions) (UserToken, UserClaims, error)
+	Verify(token string) (UserClaims, error)
 }
 
 type userTokenService struct{}
@@ -26,69 +26,56 @@ type CreateOptions struct {
 
 type UserToken = string
 
-func (s *userTokenService) Create(user *models.UserModel, options CreateOptions) (UserToken, error) {
-	var exp int64
+func (s *userTokenService) Create(user *models.UserModel, options CreateOptions) (UserToken, UserClaims, error) {
+	var exp time.Time
 	if options.Exp.IsZero() {
-		exp = time.Now().Add(time.Hour * 24 * 7).Unix()
+		exp = time.Now().Add(time.Hour * 24 * 7)
 	} else {
-		exp = options.Exp.Unix()
+		exp = options.Exp
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, NewClaims(user.Uid, exp).ToJWTClaims())
+	claims := NewUserClaimsWithExp(user.Uid, user.Username, exp)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	tokenString, err := token.SignedString(hmacSampleSecret)
 
-	return tokenString, err
+	return tokenString, claims, err
 }
 
-type Claims struct {
-	Uid string
-	Exp int64
+type UserClaims struct {
+	Uid      string `json:"uid"`
+	Username string `json:"username"`
+	jwt.RegisteredClaims
 }
 
-func NewClaims(uid string, exp int64) Claims {
-	return Claims{
-		Uid: uid,
-		Exp: exp,
+func NewUserClaims(uid string, username string) UserClaims {
+	oneWeekFromNow := time.Now().AddDate(0, 0, 7)
+	return NewUserClaimsWithExp(uid, username, oneWeekFromNow)
+}
+
+func NewUserClaimsWithExp(uid string, username string, exp time.Time) UserClaims {
+	return UserClaims{
+		Uid:      uid,
+		Username: username,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(exp),
+			Issuer:    "boinger",
+		},
 	}
 }
 
-func (c Claims) ToJWTClaims() jwt.Claims {
-	return jwt.MapClaims{
-		"uid": c.Uid,
-		"exp": c.Exp,
-	}
-}
-
-func (s *userTokenService) Verify(rawToken string) (Claims, error) {
-	token, err := jwt.Parse(rawToken, func(token *jwt.Token) (interface{}, error) {
+func (s *userTokenService) Verify(rawToken string) (UserClaims, error) {
+	token, err := jwt.ParseWithClaims(rawToken, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return hmacSampleSecret, nil
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
 	if err != nil {
-		return Claims{}, err
+		return UserClaims{}, err
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
+	claims, ok := token.Claims.(*UserClaims)
 	if !ok || !token.Valid {
-		return Claims{}, errors.New("invalid token")
+		return UserClaims{}, errors.New("invalid token")
 	}
 
-	if _, ok := claims["uid"]; !ok {
-		return Claims{}, errors.New("invalid token")
-	}
-
-	uidStr, ok := claims["uid"].(string)
-	if !ok {
-		return Claims{}, errors.New("invalid token")
-	}
-
-	expInt64, ok := claims["exp"].(float64)
-	if !ok {
-		return Claims{}, errors.New("invalid token")
-	}
-
-	return Claims{
-		Uid: uidStr,
-		Exp: int64(expInt64),
-	}, nil
+	return NewUserClaims(claims.Uid, claims.Username), nil
 }
