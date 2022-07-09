@@ -28,7 +28,7 @@ type CreateRequest struct {
 	Text string
 }
 
-func MakeCreateEndpoint(s services.BoingService) gin.HandlerFunc {
+func MakeCreateEndpoint(s services.BoingService, u services.UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request CreateRequest
 		err := c.BindJSON(&request)
@@ -37,7 +37,24 @@ func MakeCreateEndpoint(s services.BoingService) gin.HandlerFunc {
 			return
 		}
 
-		err = s.Create(request.Text, 0)
+		rawUserClaims, exists := c.Get(UserClaimsKey)
+		if !exists {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+
+		userClaims, ok := rawUserClaims.(services.UserClaims)
+		if !ok {
+			c.Status(http.StatusInternalServerError)
+		}
+
+		user, err := u.GetByUid(userClaims.Uid)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponseFromError(err))
+			return
+		}
+
+		err = s.Create(request.Text, user.Id)
 		if err != nil {
 			c.JSON(500, ErrorResponseFromError(err))
 			return

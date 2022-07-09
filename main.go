@@ -15,8 +15,8 @@ import (
 func main() {
 	db := initDB()
 
-	boingService := services.NewBoingService(db)
 	userService := services.NewUserService(db)
+	boingService := services.NewBoingService(db)
 	userTokenService := services.NewUserTokenService()
 	authService := services.NewAuthService(db, userService, userTokenService)
 
@@ -30,7 +30,7 @@ func main() {
 
 	router.GET("/boings", endpoints.MakeListEndpoint(boingService))
 	router.GET("/boings/:id", endpoints.MakeGetByIdEndpoint(boingService))
-	router.POST("/boings", userTokenMiddleware, endpoints.MakeCreateEndpoint(boingService))
+	router.POST("/boings", userTokenMiddleware, endpoints.MakeCreateEndpoint(boingService, userService))
 
 	router.POST("/dont-mind-me-boinging-around", userTokenMiddleware, func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

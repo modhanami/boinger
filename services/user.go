@@ -19,6 +19,7 @@ type UserService interface {
 	Exists(username string) bool
 	GetById(id uint) (models.UserModel, error)
 	GetByUsername(username string) (models.UserModel, error)
+	GetByUid(uid string) (models.UserModel, error)
 }
 
 type userService struct {
@@ -72,6 +73,14 @@ func (s *userService) GetById(id uint) (models.UserModel, error) {
 func (s *userService) GetByUsername(username string) (models.UserModel, error) {
 	var user models.UserModel
 	if err := s.db.Where("username = ?", username).First(&user).Error; err != nil {
+		return user, ErrUserNotFound
+	}
+	return user, nil
+}
+
+func (s *userService) GetByUid(uid string) (models.UserModel, error) {
+	var user models.UserModel
+	if err := s.db.Where("uid = ?", uid).First(&user).Error; err != nil {
 		return user, ErrUserNotFound
 	}
 	return user, nil
