@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	ErrBoingNotFound = errors.New("boing not found")
+	ErrBoingNotFound       = errors.New("boing not found")
+	ErrBoingCreationFailed = errors.New("failed to create boing")
 )
 
 type BoingService interface {
@@ -57,7 +58,7 @@ func (s *boingService) Create(text string, userId uint) error {
 	boing.CreatedAt = time.Now()
 
 	if err := s.db.Create(&boing).Error; err != nil {
-		return err
+		return ErrBoingCreationFailed
 	}
 	return nil
 }

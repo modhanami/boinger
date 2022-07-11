@@ -7,6 +7,11 @@ import (
 	"time"
 )
 
+var (
+	ErrUserClaimsParseFailed = errors.New("failed to parse user claims")
+	ErrInvalidToken          = errors.New("invalid token")
+)
+
 type UserTokenService interface {
 	Create(user *models.UserModel, options CreateOptions) (UserToken, UserClaims, error)
 	Verify(token string) (UserClaims, error)
@@ -69,12 +74,12 @@ func (s *userTokenService) Verify(rawToken string) (UserClaims, error) {
 		return hmacSampleSecret, nil
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
 	if err != nil {
-		return UserClaims{}, err
+		return UserClaims{}, ErrUserClaimsParseFailed
 	}
 
 	claims, ok := token.Claims.(*UserClaims)
 	if !ok || !token.Valid {
-		return UserClaims{}, errors.New("invalid token")
+		return UserClaims{}, ErrInvalidToken
 	}
 
 	return NewUserClaims(claims.Uid, claims.Username), nil

@@ -39,10 +39,6 @@ func (s *authService) Login(username, password string) (UserToken, UserClaims, e
 }
 
 func (s *authService) Register(username, password string) (bool, error) {
-	if s.userService.Exists(username) {
-		return false, ErrUserAlreadyExists
-	}
-
 	if _, err := s.userService.Create(username, password); err != nil {
 		return false, err
 	}

@@ -10,8 +10,10 @@ import (
 )
 
 var (
-	ErrUserNotFound      = errors.New("user not found")
-	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrUserNotFound       = errors.New("user not found")
+	ErrUserAlreadyExists  = errors.New("user already exists")
+	ErrUserCreationFailed = errors.New("failed to create user")
+	ErrPasswordHashFailed = errors.New("failed to hash password")
 )
 
 type UserService interface {
@@ -32,13 +34,13 @@ func NewUserService(db *gorm.DB) UserService {
 
 func (s *userService) Create(username, password string) (models.UserModel, error) {
 	var user models.UserModel
-	if err := s.db.Where("username = ?", username).First(&user).Error; err == nil {
+	if exists := s.Exists(username); exists {
 		return user, ErrUserAlreadyExists
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return user, err
+		return user, ErrPasswordHashFailed
 	}
 
 	user.Uid = ksuid.New().String()
@@ -47,7 +49,7 @@ func (s *userService) Create(username, password string) (models.UserModel, error
 	user.CreatedAt = time.Now()
 
 	if err := s.db.Create(&user).Error; err != nil {
-		return user, err
+		return user, ErrUserCreationFailed
 	}
 
 	return user, nil
