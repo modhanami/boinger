@@ -18,7 +18,7 @@ var (
 
 type UserService interface {
 	Create(username, password string) (models.UserModel, error)
-	Exists(username string) bool
+	Exists(username string) (bool, error)
 	GetById(id uint) (models.UserModel, error)
 	GetByUsername(username string) (models.UserModel, error)
 	GetByUid(uid string) (models.UserModel, error)
@@ -34,7 +34,11 @@ func NewUserService(db *gorm.DB) UserService {
 
 func (s *userService) Create(username, password string) (models.UserModel, error) {
 	var user models.UserModel
-	if exists := s.Exists(username); exists {
+	exists, err := s.Exists(username)
+	if err != nil {
+		return user, err
+	}
+	if exists {
 		return user, ErrUserAlreadyExists
 	}
 
@@ -55,9 +59,17 @@ func (s *userService) Create(username, password string) (models.UserModel, error
 	return user, nil
 }
 
-func (s *userService) Exists(username string) bool {
+func (s *userService) Exists(username string) (bool, error) {
 	var user models.UserModel
-	return s.db.Where("username = ?", username).First(&user).Error == nil
+	if err := s.db.Where("username = ?", username).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return false, nil
+		} else {
+			return false, err
+		}
+	}
+
+	return true, nil
 }
 
 func (s *userService) GetById(id uint) (models.UserModel, error) {
@@ -75,7 +87,11 @@ func (s *userService) GetById(id uint) (models.UserModel, error) {
 func (s *userService) GetByUsername(username string) (models.UserModel, error) {
 	var user models.UserModel
 	if err := s.db.Where("username = ?", username).First(&user).Error; err != nil {
-		return user, ErrUserNotFound
+		if err == gorm.ErrRecordNotFound {
+			return user, ErrUserNotFound
+		} else {
+			return user, err
+		}
 	}
 	return user, nil
 }
@@ -83,7 +99,11 @@ func (s *userService) GetByUsername(username string) (models.UserModel, error) {
 func (s *userService) GetByUid(uid string) (models.UserModel, error) {
 	var user models.UserModel
 	if err := s.db.Where("uid = ?", uid).First(&user).Error; err != nil {
-		return user, ErrUserNotFound
+		if err == gorm.ErrRecordNotFound {
+			return user, ErrUserNotFound
+		} else {
+			return user, err
+		}
 	}
 	return user, nil
 }
