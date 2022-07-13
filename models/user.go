@@ -13,3 +13,12 @@ type UserModel struct {
 func (m *UserModel) TableName() string {
 	return "users"
 }
+
+func NewUser(Uid string, Username string, Password string) UserModel {
+	return UserModel{
+		Uid:       Uid,
+		Username:  Username,
+		Password:  Password,
+		CreatedAt: time.Now(),
+	}
+}
