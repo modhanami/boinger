@@ -1,22 +1,16 @@
 package services
 
 import (
-	"database/sql"
 	"github.com/DATA-DOG/go-sqlmock"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"testing"
 )
 
-func initMockDB() (*gorm.DB, sqlmock.Sqlmock, error) {
-	var (
-		sqlDB *sql.DB
-		mock  sqlmock.Sqlmock
-		err   error
-	)
-
-	sqlDB, mock, err = sqlmock.New()
+func initMockDB(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
+	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
-		return nil, nil, err
+		t.Error(err)
 	}
 
 	db, err := gorm.Open(mysql.New(mysql.Config{
@@ -26,8 +20,8 @@ func initMockDB() (*gorm.DB, sqlmock.Sqlmock, error) {
 		//Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
-		return nil, nil, err
+		t.Error(err)
 	}
 
-	return db, mock, nil
+	return db, mock
 }

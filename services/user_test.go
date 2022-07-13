@@ -8,10 +8,7 @@ import (
 )
 
 func TestUserService_Create(t *testing.T) {
-	db, mock, err := initMockDB()
-	if err != nil {
-		t.Error(err)
-	}
+	db, mock := initMockDB(t)
 
 	user := models.NewUser("A1", "bingbong", "eeur")
 	service := NewUserService(db)
@@ -22,7 +19,7 @@ func TestUserService_Create(t *testing.T) {
 	mock.ExpectExec("INSERT INTO").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	user, err = service.Create(user.Username, user.Password)
+	user, err := service.Create(user.Username, user.Password)
 
 	assert.NoError(t, err)
 	assert.Equal(t, user.Username, "bingbong")
@@ -30,10 +27,7 @@ func TestUserService_Create(t *testing.T) {
 }
 
 func TestUserService_Create_DuplicateUsername(t *testing.T) {
-	db, mock, err := initMockDB()
-	if err != nil {
-		t.Error(err)
-	}
+	db, mock := initMockDB(t)
 
 	user := models.NewUser("A1", "bingbong", "eeur")
 	service := NewUserService(db)
@@ -42,17 +36,14 @@ func TestUserService_Create_DuplicateUsername(t *testing.T) {
 	rows.AddRow(user.Uid, user.Username, user.Password, user.CreatedAt)
 	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
 
-	_, err = service.Create(user.Username, user.Password)
+	_, err := service.Create(user.Username, user.Password)
 
 	assert.Error(t, err)
 	assert.Equal(t, err, ErrUserAlreadyExists)
 }
 
 func TestUserService_Exists_Found(t *testing.T) {
-	db, mock, err := initMockDB()
-	if err != nil {
-		t.Error(err)
-	}
+	db, mock := initMockDB(t)
 
 	user := models.NewUser("A1", "bingbong", "eeur")
 	service := NewUserService(db)
@@ -68,10 +59,7 @@ func TestUserService_Exists_Found(t *testing.T) {
 }
 
 func TestUserService_Exists_NotFound(t *testing.T) {
-	db, mock, err := initMockDB()
-	if err != nil {
-		t.Error(err)
-	}
+	db, mock := initMockDB(t)
 
 	service := NewUserService(db)
 
@@ -85,10 +73,7 @@ func TestUserService_Exists_NotFound(t *testing.T) {
 }
 
 func TestUserService_GetById_Found(t *testing.T) {
-	db, mock, err := initMockDB()
-	if err != nil {
-		t.Error(err)
-	}
+	db, mock := initMockDB(t)
 
 	user := models.NewUser("A1", "bingbong", "eeur")
 	service := NewUserService(db)
@@ -97,33 +82,27 @@ func TestUserService_GetById_Found(t *testing.T) {
 	rows.AddRow(1, user.Uid, user.Username, user.Password, user.CreatedAt)
 	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
 
-	user, err = service.GetById(1)
+	user, err := service.GetById(1)
 	assert.NoError(t, err)
 	assert.Equal(t, user.Uid, "A1")
 }
 
 func TestUserService_GetById_NotFound(t *testing.T) {
-	db, mock, err := initMockDB()
-	if err != nil {
-		t.Error(err)
-	}
+	db, mock := initMockDB(t)
 
 	service := NewUserService(db)
 
 	rows := createUserRows()
 	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
 
-	_, err = service.GetById(1)
+	_, err := service.GetById(1)
 
 	assert.Error(t, err)
 	assert.Equal(t, err, ErrUserNotFound)
 }
 
 func TestUserService_GetByUsername_Found(t *testing.T) {
-	db, mock, err := initMockDB()
-	if err != nil {
-		t.Error(err)
-	}
+	db, mock := initMockDB(t)
 
 	user := models.NewUser("A1", "bingbong", "eeur")
 	service := NewUserService(db)
@@ -132,33 +111,27 @@ func TestUserService_GetByUsername_Found(t *testing.T) {
 	rows.AddRow(user.Uid, user.Username, user.Password, user.CreatedAt)
 	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
 
-	user, err = service.GetByUsername(user.Username)
+	user, err := service.GetByUsername(user.Username)
 	assert.NoError(t, err)
 	assert.Equal(t, user.Uid, "A1")
 }
 
 func TestUserService_GetByUsername_NotFound(t *testing.T) {
-	db, mock, err := initMockDB()
-	if err != nil {
-		t.Error(err)
-	}
+	db, mock := initMockDB(t)
 
 	service := NewUserService(db)
 
 	rows := createUserRows()
 	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
 
-	_, err = service.GetByUsername("whosthis")
+	_, err := service.GetByUsername("whosthis")
 
 	assert.Error(t, err)
 	assert.Equal(t, err, ErrUserNotFound)
 }
 
 func TestUserService_GetByUid_Found(t *testing.T) {
-	db, mock, err := initMockDB()
-	if err != nil {
-		t.Error(err)
-	}
+	db, mock := initMockDB(t)
 
 	user := models.NewUser("A1", "bingbong", "eeur")
 	service := NewUserService(db)
@@ -167,23 +140,20 @@ func TestUserService_GetByUid_Found(t *testing.T) {
 	rows.AddRow(user.Uid, user.Username, user.Password, user.CreatedAt)
 	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
 
-	user, err = service.GetByUid(user.Uid)
+	user, err := service.GetByUid(user.Uid)
 	assert.NoError(t, err)
 	assert.Equal(t, user.Uid, "A1")
 }
 
 func TestUserService_GetByUid_NotFound(t *testing.T) {
-	db, mock, err := initMockDB()
-	if err != nil {
-		t.Error(err)
-	}
+	db, mock := initMockDB(t)
 
 	service := NewUserService(db)
 
 	rows := createUserRows()
 	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
 
-	_, err = service.GetByUid("whosthis")
+	_, err := service.GetByUid("whosthis")
 
 	assert.Error(t, err)
 	assert.Equal(t, err, ErrUserNotFound)

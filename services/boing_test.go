@@ -8,10 +8,7 @@ import (
 )
 
 func TestShouldListBoings(t *testing.T) {
-	db, mock, err := initMockDB()
-	if err != nil {
-		t.Error(err)
-	}
+	db, mock := initMockDB(t)
 
 	var boings = []models.BoingModel{
 		models.NewBoing("A1", "boing1", 0),
@@ -29,7 +26,7 @@ func TestShouldListBoings(t *testing.T) {
 
 	var service = NewBoingService(db)
 	var boingsResult []models.BoingModel
-	boingsResult, err = service.List()
+	boingsResult, err := service.List()
 	if err != nil {
 		t.Error(err)
 	}
@@ -46,10 +43,7 @@ func TestShouldListBoings(t *testing.T) {
 }
 
 func TestShouldCreateBoing(t *testing.T) {
-	db, mock, err := initMockDB()
-	if err != nil {
-		t.Error(err)
-	}
+	db, mock := initMockDB(t)
 
 	boing := models.NewBoing("A1", "boing1", 0)
 
@@ -58,7 +52,7 @@ func TestShouldCreateBoing(t *testing.T) {
 	mock.ExpectCommit()
 
 	service := NewBoingService(db)
-	err = service.Create(boing.Text, 0)
+	err := service.Create(boing.Text, 0)
 	if err != nil {
 		t.Error(err)
 	}
@@ -69,10 +63,7 @@ func TestShouldCreateBoing(t *testing.T) {
 }
 
 func TestShouldGetBoingById(t *testing.T) {
-	db, mock, err := initMockDB()
-	if err != nil {
-		t.Error(err)
-	}
+	db, mock := initMockDB(t)
 
 	boing := models.NewBoing("A1", "boing1", 0)
 
@@ -83,7 +74,7 @@ func TestShouldGetBoingById(t *testing.T) {
 
 	var service = NewBoingService(db)
 	var boingResult models.BoingModel
-	boingResult, err = service.Get(boing.Id)
+	boingResult, err := service.Get(boing.Id)
 	if err != nil {
 		t.Error(err)
 	}
