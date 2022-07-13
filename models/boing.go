@@ -13,3 +13,12 @@ type BoingModel struct {
 func (m *BoingModel) TableName() string {
 	return "boings"
 }
+
+func NewBoing(uid string, text string, userId uint) BoingModel {
+	return BoingModel{
+		Uid:       uid,
+		Text:      text,
+		UserId:    userId,
+		CreatedAt: time.Now(),
+	}
+}

@@ -62,12 +62,3 @@ func (s *boingService) Create(text string, userId uint) error {
 	}
 	return nil
 }
-
-func NewBoing(uid string, text string, userId uint) models.BoingModel {
-	return models.BoingModel{
-		Uid:       uid,
-		Text:      text,
-		UserId:    userId,
-		CreatedAt: time.Now(),
-	}
-}

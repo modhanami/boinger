@@ -1,11 +1,8 @@
 package services
 
 import (
-	"database/sql"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/modhanami/boinger/models"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 	"reflect"
 	"testing"
 )
@@ -17,12 +14,12 @@ func TestShouldListBoings(t *testing.T) {
 	}
 
 	var boings = []models.BoingModel{
-		NewBoing("A1", "boing1", 0),
-		NewBoing("A2", "boing2", 0),
-		NewBoing("A3", "boing3", 0),
+		models.NewBoing("A1", "boing1", 0),
+		models.NewBoing("A2", "boing2", 0),
+		models.NewBoing("A3", "boing3", 0),
 	}
 
-	rows := createRows()
+	rows := createBoingRows()
 
 	for _, boing := range boings {
 		rows = rows.AddRow(boing.Uid, boing.Text, boing.UserId, boing.CreatedAt)
@@ -54,7 +51,7 @@ func TestShouldCreateBoing(t *testing.T) {
 		t.Error(err)
 	}
 
-	boing := NewBoing("A1", "boing1", 0)
+	boing := models.NewBoing("A1", "boing1", 0)
 
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO").WillReturnResult(sqlmock.NewResult(1, 1))
@@ -77,9 +74,9 @@ func TestShouldGetBoingById(t *testing.T) {
 		t.Error(err)
 	}
 
-	boing := NewBoing("A1", "boing1", 0)
+	boing := models.NewBoing("A1", "boing1", 0)
 
-	rows := createRows()
+	rows := createBoingRows()
 	rows.AddRow(boing.Uid, boing.Text, boing.UserId, boing.CreatedAt)
 
 	mock.ExpectQuery("SELECT").WillReturnRows(rows)
@@ -96,33 +93,8 @@ func TestShouldGetBoingById(t *testing.T) {
 	}
 }
 
-func createRows() *sqlmock.Rows {
+func createBoingRows() *sqlmock.Rows {
 	var columns = []string{"uid", "text", "user_id", "created_at"}
 	var rows = sqlmock.NewRows(columns)
 	return rows
-}
-
-func initMockDB() (*gorm.DB, sqlmock.Sqlmock, error) {
-	var (
-		sqlDB *sql.DB
-		mock  sqlmock.Sqlmock
-		err   error
-	)
-
-	sqlDB, mock, err = sqlmock.New()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	db, err := gorm.Open(mysql.New(mysql.Config{
-		Conn:                      sqlDB,
-		SkipInitializeWithVersion: true,
-	}), &gorm.Config{
-		//Logger: logger.Default.LogMode(logger.Info),
-	})
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return db, mock, nil
 }
