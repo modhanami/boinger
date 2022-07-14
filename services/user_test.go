@@ -8,9 +8,7 @@ import (
 )
 
 func TestUserService_Create(t *testing.T) {
-	db, mock := initMockDB(t)
-	serviceLogger := initLogger()
-	service := NewUserService(db, serviceLogger)
+	service, mock := initServiceWithMocks(t)
 
 	user := models.NewUser("A1", "bingbong", "eeur")
 
@@ -28,9 +26,7 @@ func TestUserService_Create(t *testing.T) {
 }
 
 func TestUserService_Create_DuplicateUsername(t *testing.T) {
-	db, mock := initMockDB(t)
-	serviceLogger := initLogger()
-	service := NewUserService(db, serviceLogger)
+	service, mock := initServiceWithMocks(t)
 
 	user := models.NewUser("A1", "bingbong", "eeur")
 
@@ -45,9 +41,7 @@ func TestUserService_Create_DuplicateUsername(t *testing.T) {
 }
 
 func TestUserService_Exists_Found(t *testing.T) {
-	db, mock := initMockDB(t)
-	serviceLogger := initLogger()
-	service := NewUserService(db, serviceLogger)
+	service, mock := initServiceWithMocks(t)
 
 	user := models.NewUser("A1", "bingbong", "eeur")
 
@@ -62,9 +56,7 @@ func TestUserService_Exists_Found(t *testing.T) {
 }
 
 func TestUserService_Exists_NotFound(t *testing.T) {
-	db, mock := initMockDB(t)
-	serviceLogger := initLogger()
-	service := NewUserService(db, serviceLogger)
+	service, mock := initServiceWithMocks(t)
 
 	rows := createUserRows()
 	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
@@ -76,9 +68,7 @@ func TestUserService_Exists_NotFound(t *testing.T) {
 }
 
 func TestUserService_GetById_Found(t *testing.T) {
-	db, mock := initMockDB(t)
-	serviceLogger := initLogger()
-	service := NewUserService(db, serviceLogger)
+	service, mock := initServiceWithMocks(t)
 
 	user := models.NewUser("A1", "bingbong", "eeur")
 
@@ -92,9 +82,7 @@ func TestUserService_GetById_Found(t *testing.T) {
 }
 
 func TestUserService_GetById_NotFound(t *testing.T) {
-	db, mock := initMockDB(t)
-	serviceLogger := initLogger()
-	service := NewUserService(db, serviceLogger)
+	service, mock := initServiceWithMocks(t)
 
 	rows := createUserRows()
 	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
@@ -106,9 +94,7 @@ func TestUserService_GetById_NotFound(t *testing.T) {
 }
 
 func TestUserService_GetByUsername_Found(t *testing.T) {
-	db, mock := initMockDB(t)
-	serviceLogger := initLogger()
-	service := NewUserService(db, serviceLogger)
+	service, mock := initServiceWithMocks(t)
 
 	user := models.NewUser("A1", "bingbong", "eeur")
 
@@ -122,9 +108,7 @@ func TestUserService_GetByUsername_Found(t *testing.T) {
 }
 
 func TestUserService_GetByUsername_NotFound(t *testing.T) {
-	db, mock := initMockDB(t)
-	serviceLogger := initLogger()
-	service := NewUserService(db, serviceLogger)
+	service, mock := initServiceWithMocks(t)
 
 	rows := createUserRows()
 	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
@@ -136,9 +120,7 @@ func TestUserService_GetByUsername_NotFound(t *testing.T) {
 }
 
 func TestUserService_GetByUid_Found(t *testing.T) {
-	db, mock := initMockDB(t)
-	serviceLogger := initLogger()
-	service := NewUserService(db, serviceLogger)
+	service, mock := initServiceWithMocks(t)
 
 	user := models.NewUser("A1", "bingbong", "eeur")
 
@@ -152,9 +134,7 @@ func TestUserService_GetByUid_Found(t *testing.T) {
 }
 
 func TestUserService_GetByUid_NotFound(t *testing.T) {
-	db, mock := initMockDB(t)
-	serviceLogger := initLogger()
-	service := NewUserService(db, serviceLogger)
+	service, mock := initServiceWithMocks(t)
 
 	rows := createUserRows()
 	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
@@ -175,4 +155,12 @@ func createUserRowsWithId() *sqlmock.Rows {
 	var columns = []string{"id", "uid", "username", "password", "created_at"}
 	var rows = sqlmock.NewRows(columns)
 	return rows
+}
+
+func initServiceWithMocks(t *testing.T) (UserService, sqlmock.Sqlmock) {
+	db, mock := initMockDB(t)
+	serviceLogger := initLogger()
+	service := NewUserService(db, serviceLogger)
+
+	return service, mock
 }
