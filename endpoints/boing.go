@@ -66,7 +66,7 @@ func MakeGetByIdEndpoint(s services.BoingService) gin.HandlerFunc {
 			return
 		}
 
-		boing, err := s.Get(uint(id))
+		boing, err := s.GetById(uint(id))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponseFromError(err))
 			return
