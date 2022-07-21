@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-type BoingModel struct {
+type Boing struct {
 	Id        uint      `gorm:"primary_key" json:"-"`
 	Uid       string    `json:"id"`
 	Text      string    `json:"text"`
@@ -10,12 +10,12 @@ type BoingModel struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-func (m *BoingModel) TableName() string {
+func (m *Boing) TableName() string {
 	return "boings"
 }
 
-func NewBoing(uid string, text string, userId uint) BoingModel {
-	return BoingModel{
+func NewBoing(uid string, text string, userId uint) Boing {
+	return Boing{
 		Uid:       uid,
 		Text:      text,
 		UserId:    userId,

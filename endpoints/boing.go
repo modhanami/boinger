@@ -70,7 +70,7 @@ func MakeGetByIdEndpoint(s services.BoingService) gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponseFromError(err))
 			return
-		} else if boing == (models.BoingModel{}) {
+		} else if boing == (models.Boing{}) {
 			c.JSON(http.StatusNotFound, NewErrorResponse("Boing not found"))
 			return
 		}
