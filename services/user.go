@@ -18,11 +18,11 @@ var (
 )
 
 type UserService interface {
-	Create(username, password string) (models.UserModel, error)
+	Create(username, password string) (models.User, error)
 	Exists(username string) (bool, error)
-	GetById(id uint) (models.UserModel, error)
-	GetByUsername(username string) (models.UserModel, error)
-	GetByUid(uid string) (models.UserModel, error)
+	GetById(id uint) (models.User, error)
+	GetByUsername(username string) (models.User, error)
+	GetByUid(uid string) (models.User, error)
 }
 
 type userService struct {
@@ -34,9 +34,9 @@ func NewUserService(db *gorm.DB, log log.Interface) UserService {
 	return &userService{db: db, log: log}
 }
 
-func (s *userService) Create(username, password string) (models.UserModel, error) {
+func (s *userService) Create(username, password string) (models.User, error) {
 	s.log.Info("creating user", "username", username)
-	var user models.UserModel
+	var user models.User
 	exists, err := s.Exists(username)
 	if err != nil {
 		s.log.Error("failed to check if user exists", "username", username, "error", err)
@@ -68,7 +68,7 @@ func (s *userService) Create(username, password string) (models.UserModel, error
 }
 
 func (s *userService) Exists(username string) (bool, error) { // TODO: unexport this
-	var user models.UserModel
+	var user models.User
 	if err := s.db.Where("username = ?", username).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return false, nil
@@ -80,9 +80,9 @@ func (s *userService) Exists(username string) (bool, error) { // TODO: unexport 
 	return true, nil
 }
 
-func (s *userService) GetById(id uint) (models.UserModel, error) {
+func (s *userService) GetById(id uint) (models.User, error) {
 	s.log.Info("getting user by id", "id", id)
-	var user models.UserModel
+	var user models.User
 	if err := s.db.First(&user, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			s.log.Info("user not found", "id", id)
@@ -94,9 +94,9 @@ func (s *userService) GetById(id uint) (models.UserModel, error) {
 	return user, nil
 }
 
-func (s *userService) GetByUsername(username string) (models.UserModel, error) {
+func (s *userService) GetByUsername(username string) (models.User, error) {
 	s.log.Info("getting user by username", "username", username)
-	var user models.UserModel
+	var user models.User
 	if err := s.db.Where("username = ?", username).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			s.log.Info("user not found", "username", username)
@@ -108,9 +108,9 @@ func (s *userService) GetByUsername(username string) (models.UserModel, error) {
 	return user, nil
 }
 
-func (s *userService) GetByUid(uid string) (models.UserModel, error) {
+func (s *userService) GetByUid(uid string) (models.User, error) {
 	s.log.Info("getting user by uid", "uid", uid)
-	var user models.UserModel
+	var user models.User
 	if err := s.db.Where("uid = ?", uid).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			s.log.Info("user not found", "uid", uid)

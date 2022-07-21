@@ -25,7 +25,7 @@ func TestVerifyJWTUserTokenMiddleware_Authenticated(t *testing.T) {
 		c.Status(http.StatusOK)
 	})
 
-	validToken, _, err := userTokenService.Create(&models.UserModel{
+	validToken, _, err := userTokenService.Create(&models.User{
 		Uid: "test",
 	}, services.CreateOptions{
 		Exp: time.Now().Add(time.Hour),
@@ -56,7 +56,7 @@ func TestVerifyJWTUserTokenMiddleware_SetUserId(t *testing.T) {
 		c.Status(http.StatusOK)
 	})
 
-	validToken, _, err := userTokenService.Create(&models.UserModel{
+	validToken, _, err := userTokenService.Create(&models.User{
 		Uid: "test",
 	}, services.CreateOptions{
 		Exp: time.Now().Add(time.Hour),

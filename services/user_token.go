@@ -13,7 +13,7 @@ var (
 )
 
 type UserTokenService interface {
-	Create(user *models.UserModel, options CreateOptions) (UserToken, UserClaims, error)
+	Create(user *models.User, options CreateOptions) (UserToken, UserClaims, error)
 	Verify(token string) (UserClaims, error)
 }
 
@@ -31,7 +31,7 @@ type CreateOptions struct {
 
 type UserToken = string
 
-func (s *userTokenService) Create(user *models.UserModel, options CreateOptions) (UserToken, UserClaims, error) {
+func (s *userTokenService) Create(user *models.User, options CreateOptions) (UserToken, UserClaims, error) {
 	var exp time.Time
 	if options.Exp.IsZero() {
 		exp = time.Now().Add(time.Hour * 24 * 7)

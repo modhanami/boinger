@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-type UserModel struct {
+type User struct {
 	Id        uint `gorm:"primary_key" json:"-"`
 	Uid       string
 	Username  string
@@ -10,12 +10,12 @@ type UserModel struct {
 	CreatedAt time.Time
 }
 
-func (m *UserModel) TableName() string {
+func (m *User) TableName() string {
 	return "users"
 }
 
-func NewUser(Uid string, Username string, Password string) UserModel {
-	return UserModel{
+func NewUser(Uid string, Username string, Password string) User {
+	return User{
 		Uid:       Uid,
 		Username:  Username,
 		Password:  Password,

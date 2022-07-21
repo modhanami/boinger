@@ -8,7 +8,7 @@ import (
 )
 
 func TestCreateUserToken(t *testing.T) {
-	var user = &models.UserModel{
+	var user = &models.User{
 		Id:       123,
 		Uid:      "A1",
 		Username: "bingbong",
@@ -23,7 +23,7 @@ func TestCreateUserToken(t *testing.T) {
 }
 
 func TestVerifyValidUserToken(t *testing.T) {
-	var user = &models.UserModel{
+	var user = &models.User{
 		Id:       123,
 		Uid:      "A1",
 		Username: "bingbong",
@@ -41,7 +41,7 @@ func TestVerifyValidUserToken(t *testing.T) {
 }
 
 func TestFailVerifyExpiredUserToken(t *testing.T) {
-	var user = &models.UserModel{
+	var user = &models.User{
 		Id:       123,
 		Uid:      "A1",
 		Username: "bingbong",
