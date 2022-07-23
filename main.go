@@ -51,7 +51,7 @@ func initDB() *gorm.DB {
 		panic(err)
 	}
 
-	err = db.AutoMigrate(&models.BoingModel{}, &models.UserModel{})
+	err = db.AutoMigrate(&models.Boing{}, &models.User{})
 	if err != nil {
 		panic(err)
 	}
