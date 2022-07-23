@@ -23,6 +23,7 @@ type UserService interface {
 	GetById(id uint) (models.User, error)
 	GetByUsername(username string) (models.User, error)
 	GetByUid(uid string) (models.User, error)
+	GetByUids(uids []string) ([]models.User, error)
 }
 
 type userService struct {
@@ -120,4 +121,13 @@ func (s *userService) GetByUid(uid string) (models.User, error) {
 		}
 	}
 	return user, nil
+}
+
+func (s *userService) GetByUids(uids []string) ([]models.User, error) {
+	s.log.Info("getting users by uids", "uids", uids)
+	var users []models.User
+	if err := s.db.Where("uid IN (?)", uids).Find(&users).Error; err != nil {
+		return users, err
+	}
+	return users, nil
 }
