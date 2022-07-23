@@ -4,8 +4,6 @@ import (
 	"errors"
 	"github.com/modhanami/boinger/models"
 	"github.com/segmentio/ksuid"
-	"time"
-
 	"gorm.io/gorm"
 )
 
@@ -17,7 +15,7 @@ var (
 type BoingService interface {
 	List() ([]models.Boing, error)
 	GetById(id uint) (models.Boing, error)
-	Create(text string, userId uint) error
+	Create(text string, userId uint, userUid string) error
 }
 
 type boingService struct {
@@ -48,14 +46,10 @@ func (s *boingService) GetById(id uint) (models.Boing, error) {
 	return boing, nil
 }
 
-func (s *boingService) Create(text string, userId uint) error {
+func (s *boingService) Create(text string, userId uint, userUid string) error {
 	uid := ksuid.New().String()
 
-	var boing models.Boing
-	boing.Uid = uid
-	boing.Text = text
-	boing.UserId = userId
-	boing.CreatedAt = time.Now()
+	boing := models.NewBoing(uid, text, userId, userUid)
 
 	if err := s.db.Create(&boing).Error; err != nil {
 		return ErrBoingCreationFailed

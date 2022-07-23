@@ -49,7 +49,7 @@ func MakeCreateEndpoint(s services.BoingService, u services.UserService) gin.Han
 			return
 		}
 
-		err = s.Create(request.Text, user.Id)
+		err = s.Create(request.Text, user.Id, user.Uid)
 		if err != nil {
 			c.JSON(500, ErrorResponseFromError(err))
 			return
