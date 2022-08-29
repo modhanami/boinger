@@ -35,9 +35,11 @@ func TestVerifyValidUserToken(t *testing.T) {
 		t.FailNow()
 	}
 
-	_, err = service.Verify(token)
+	userClaims, err := service.Verify(token)
 
 	assert.NoError(t, err)
+	assert.NotEmpty(t, userClaims)
+	assert.Equal(t, user.Uid, userClaims.Uid)
 }
 
 func TestFailVerifyExpiredUserToken(t *testing.T) {
@@ -50,7 +52,8 @@ func TestFailVerifyExpiredUserToken(t *testing.T) {
 	service := NewUserTokenService()
 	token, _, err := service.Create(user, CreateOptions{Exp: time.Now().Add(-time.Hour)})
 
-	_, err = service.Verify(token)
+	userClaims, err := service.Verify(token)
 
 	assert.Error(t, err)
+	assert.Empty(t, userClaims)
 }

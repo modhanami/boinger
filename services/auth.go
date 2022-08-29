@@ -1,47 +1,73 @@
 package services
 
 import (
-	"golang.org/x/crypto/bcrypt"
+	"errors"
+	"github.com/modhanami/boinger/models"
 	"gorm.io/gorm"
 )
 
+var (
+	ErrInvalidCredentials = errors.New("invalid credentials")
+)
+
 type AuthService interface {
-	Login(username, password string) (UserToken, UserClaims, error)
-	Register(username, password string) (bool, error)
+	Authenticate(username, password string) (models.User, error)
+	Register(username, password string) (models.User, error)
 }
 
 type authService struct {
 	db               *gorm.DB
 	userService      UserService
 	userTokenService UserTokenService
+	passwordHasher   PasswordHasher
 }
 
-func NewAuthService(db *gorm.DB, userService UserService, userTokenService UserTokenService) AuthService {
-	return &authService{db: db, userService: userService, userTokenService: userTokenService}
+type PasswordHasher interface {
+	HashPassword(password string) (string, error)
+	ComparePassword(hashedPassword, password string) error
 }
 
-func (s *authService) Login(username, password string) (UserToken, UserClaims, error) {
+func NewAuthService(db *gorm.DB, userService UserService, userTokenService UserTokenService, passwordHasher PasswordHasher) AuthService {
+	return &authService{
+		db:               db,
+		userService:      userService,
+		userTokenService: userTokenService,
+		passwordHasher:   passwordHasher,
+	}
+}
+
+func (s *authService) Authenticate(username, password string) (models.User, error) {
 	user, err := s.userService.GetByUsername(username)
-	var userToken UserToken
-
 	if err != nil {
-		return userToken, UserClaims{}, err
+		return models.User{}, err
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	err = s.passwordHasher.ComparePassword(user.Password, password)
 	if err != nil {
-		return userToken, UserClaims{}, err
+		return models.User{}, ErrInvalidCredentials
 	}
 
-	userToken, claims, err := s.userTokenService.Create(&user, CreateOptions{})
-
-	return userToken, claims, err
+	return user, nil
 }
 
-func (s *authService) Register(username, password string) (bool, error) {
-	if _, err := s.userService.Create(username, password); err != nil {
-		return false, err
+func (s *authService) Register(username, password string) (models.User, error) {
+	exists, err := s.userService.ExistsByUsername(username)
+	if err != nil {
+		return models.User{}, err
+	}
+	if exists {
+		return models.User{}, ErrUserAlreadyExists
 	}
 
-	return true, nil
+	hashedPassword, err := s.passwordHasher.HashPassword(password)
+	if err != nil {
+		return models.User{}, ErrInvalidCredentials
+	}
+
+	user, err := s.userService.Create(username, hashedPassword)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	return user, nil
 }

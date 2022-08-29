@@ -49,7 +49,7 @@ func TestUserService_Exists_Found(t *testing.T) {
 	rows.AddRow(user.Uid, user.Username, user.Password, user.CreatedAt)
 	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
 
-	exists, err := service.Exists(user.Username)
+	exists, err := service.ExistsByUsername(user.Username)
 
 	assert.NoError(t, err)
 	assert.True(t, exists)
@@ -61,7 +61,7 @@ func TestUserService_Exists_NotFound(t *testing.T) {
 	rows := createUserRows()
 	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
 
-	exists, err := service.Exists("whosthis")
+	exists, err := service.ExistsByUsername("whosthis")
 
 	assert.NoError(t, err)
 	assert.False(t, exists)
