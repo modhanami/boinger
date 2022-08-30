@@ -4,8 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/modhanami/boinger/services"
 	"net/http"
-	"os"
-	"time"
 )
 
 var UserClaimsKey = "userClaims"
@@ -24,25 +22,41 @@ func NewUserClaimsResponseFromClaims(claims *services.UserClaims) *UserClaimsRes
 	}
 }
 
-func MakeLoginEndpoint(s services.AuthService) gin.HandlerFunc {
+type tokenResponse struct {
+	Token        string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+func NewTokenResponse(token string, refreshToken string) *tokenResponse {
+	return &tokenResponse{
+		Token:        token,
+		RefreshToken: refreshToken,
+	}
+}
+
+func MakeLoginEndpoint(s services.AuthService, userTokenService services.UserTokenService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		username := c.PostForm("username")
 		password := c.PostForm("password")
-		userToken, claims, err := s.Login(username, password)
+		user, err := s.Authenticate(username, password)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, ErrorResponseFromError(err))
 			return
 		}
 
-		now := time.Now()
-		oneYearFromNow := now.AddDate(1, 0, 0)
-		maxAge := int(oneYearFromNow.Sub(now).Seconds())
+		token, _, err := userTokenService.Create(&user, services.CreateOptions{})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponseFromError(err))
+			return
+		}
 
-		disableSecureCookiesEnv := os.Getenv("SECURE_COOKIES_DISABLED")
-		secure := disableSecureCookiesEnv != "true"
+		refreshToken, err := userTokenService.RenewRefreshToken(user.Id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponseFromError(err))
+			return
+		}
 
-		c.SetCookie(AuthTokenCookieName, userToken, maxAge, "/", "", secure, true)
-		c.JSON(http.StatusOK, NewUserClaimsResponseFromClaims(&claims))
+		c.JSON(http.StatusOK, NewTokenResponse(token, refreshToken.Token))
 	}
 }
 
@@ -50,16 +64,12 @@ func MakeRegisterEndpoint(s services.AuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		username := c.PostForm("username")
 		password := c.PostForm("password")
-		success, err := s.Register(username, password)
+		_, err := s.Register(username, password)
 		if err != nil {
 			if err == services.ErrUserAlreadyExists {
 				c.JSON(http.StatusConflict, ErrorResponseFromError(err))
 				return
 			}
-			c.JSON(http.StatusInternalServerError, ErrorResponseFromError(err))
-		}
-
-		if !success {
 			c.JSON(http.StatusInternalServerError, ErrorResponseFromError(err))
 		}
 
