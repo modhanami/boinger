@@ -6,6 +6,8 @@ import (
 	"github.com/modhanami/boinger/models"
 	"github.com/modhanami/boinger/services"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -17,9 +19,24 @@ func makeRouter() *gin.Engine {
 	return router
 }
 
+func setup(t *testing.T) *gorm.DB {
+	gdb, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fail()
+	}
+
+	err = gdb.AutoMigrate(&models.User{}, &models.RefreshToken{})
+	if err != nil {
+		return nil
+	}
+
+	return gdb.Debug().Begin()
+}
+
 func TestVerifyJWTUserTokenMiddleware_Authenticated(t *testing.T) {
+	db := setup(t)
 	router := makeRouter()
-	userTokenService := services.NewUserTokenService()
+	userTokenService := services.NewUserTokenService(db)
 	userTokenMiddleware := MakeVerifyJWTUserTokenMiddleware(userTokenService)
 	router.GET("/", userTokenMiddleware, func(c *gin.Context) {
 		c.Status(http.StatusOK)
@@ -47,8 +64,9 @@ func TestVerifyJWTUserTokenMiddleware_Authenticated(t *testing.T) {
 }
 
 func TestVerifyJWTUserTokenMiddleware_SetUserId(t *testing.T) {
+	db := setup(t)
 	router := makeRouter()
-	userTokenService := services.NewUserTokenService()
+	userTokenService := services.NewUserTokenService(db)
 	userTokenMiddleware := MakeVerifyJWTUserTokenMiddleware(userTokenService)
 	router.GET("/", userTokenMiddleware, func(c *gin.Context) {
 		userId := c.MustGet(endpoints.UserIdKey).(string)
@@ -78,8 +96,9 @@ func TestVerifyJWTUserTokenMiddleware_SetUserId(t *testing.T) {
 }
 
 func TestVerifyJWTUserTokenMiddleware_InvalidAuthCookie(t *testing.T) {
+	db := setup(t)
 	router := makeRouter()
-	userTokenService := services.NewUserTokenService()
+	userTokenService := services.NewUserTokenService(db)
 	userTokenMiddleware := MakeVerifyJWTUserTokenMiddleware(userTokenService)
 	router.GET("/", userTokenMiddleware, func(c *gin.Context) {
 		t.FailNow()
@@ -97,8 +116,9 @@ func TestVerifyJWTUserTokenMiddleware_InvalidAuthCookie(t *testing.T) {
 }
 
 func TestVerifyJWTUserTokenMiddleware_EmptyAuthCookie(t *testing.T) {
+	db := setup(t)
 	router := makeRouter()
-	userTokenService := services.NewUserTokenService()
+	userTokenService := services.NewUserTokenService(db)
 	userTokenMiddleware := MakeVerifyJWTUserTokenMiddleware(userTokenService)
 	router.GET("/", userTokenMiddleware, func(c *gin.Context) {
 		c.Status(http.StatusOK)
