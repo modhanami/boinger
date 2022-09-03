@@ -7,6 +7,7 @@ require (
 	github.com/deepmap/oapi-codegen v1.11.0
 	github.com/getkin/kin-openapi v0.97.0
 	github.com/gin-gonic/gin v1.7.7
+	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/segmentio/ksuid v1.0.4
 	github.com/stretchr/testify v1.7.1
