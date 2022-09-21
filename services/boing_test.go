@@ -11,9 +11,9 @@ func TestBoingService_List(t *testing.T) {
 	service, mock := initBoingServiceWithMocks(t)
 
 	var boings = []models.Boing{
-		models.NewBoing("A1", "boing1", 0),
-		models.NewBoing("A2", "boing2", 0),
-		models.NewBoing("A3", "boing3", 0),
+		models.NewBoing("boing1", 0),
+		models.NewBoing("boing2", 0),
+		models.NewBoing("boing3", 0),
 	}
 
 	rows := createBoingRows()
@@ -44,7 +44,7 @@ func TestBoingService_List_UnexpectedDBError(t *testing.T) {
 func TestBoingService_Create(t *testing.T) {
 	service, mock := initBoingServiceWithMocks(t)
 
-	boing := models.NewBoing("A1", "boing1", 0)
+	boing := models.NewBoing("boing1", 0)
 
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO").WillReturnResult(sqlmock.NewResult(1, 1))
@@ -71,7 +71,7 @@ func TestBoingService_Create_Failed(t *testing.T) {
 func TestBoingService_GetById(t *testing.T) {
 	service, mock := initBoingServiceWithMocks(t)
 
-	boing := models.NewBoing("A1", "boing1", 0)
+	boing := models.NewBoing("boing1", 0)
 
 	rows := createBoingRows()
 	rows.AddRow(boing.Id, boing.Text, boing.UserId, boing.CreatedAt)

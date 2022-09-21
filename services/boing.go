@@ -3,7 +3,6 @@ package services
 import (
 	"errors"
 	"github.com/modhanami/boinger/models"
-	"github.com/segmentio/ksuid"
 	"gorm.io/gorm"
 )
 
@@ -47,9 +46,7 @@ func (s *boingService) GetById(id uint) (models.Boing, error) {
 }
 
 func (s *boingService) Create(text string, userId uint) error {
-	uid := ksuid.New().String()
-
-	boing := models.NewBoing(uid, text, userId)
+	boing := models.NewBoing(text, userId)
 
 	if err := s.db.Create(&boing).Error; err != nil {
 		return ErrBoingCreationFailed
