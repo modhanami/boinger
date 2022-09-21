@@ -27,7 +27,7 @@ func main() {
 	boingService := services.NewBoingService(db)
 	userTokenService := services.NewUserTokenService(db)
 	authService := services.NewAuthService(db, userService, userTokenService, hashers.NewBcryptHasher())
-	timelineService := services.NewTimelineService(userService, boingService)
+	//timelineService := services.NewTimelineService(userService, boingService)
 
 	router := gin.Default()
 	userTokenMiddleware := middlewares.MakeVerifyJWTUserTokenMiddleware(userTokenService)
@@ -40,7 +40,7 @@ func main() {
 	router.GET("/boings", endpoints.MakeListEndpoint(boingService))
 	router.GET("/boings/:id", endpoints.MakeGetByIdEndpoint(boingService))
 	router.POST("/boings", userTokenMiddleware, endpoints.MakeCreateEndpoint(boingService, userService))
-	router.GET("/timeline", endpoints.MakeTimelineEndpoint(timelineService))
+	//router.GET("/timeline", endpoints.MakeTimelineEndpoint(timelineService))
 
 	router.POST("/dont-mind-me-boinging-around", userTokenMiddleware, func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

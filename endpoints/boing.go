@@ -43,13 +43,13 @@ func MakeCreateEndpoint(s services.BoingService, u services.UserService) gin.Han
 			c.Status(http.StatusInternalServerError)
 		}
 
-		user, err := u.GetByUid(userClaims.Uid)
+		user, err := u.GetById(userClaims.ID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponseFromError(err))
 			return
 		}
 
-		err = s.Create(request.Text, user.Id, user.Uid)
+		err = s.Create(request.Text, user.ID)
 		if err != nil {
 			c.JSON(500, ErrorResponseFromError(err))
 			return

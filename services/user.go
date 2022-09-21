@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/modhanami/boinger/log"
 	"github.com/modhanami/boinger/models"
-	"github.com/segmentio/ksuid"
 	"gorm.io/gorm"
 	"time"
 )
@@ -20,8 +19,6 @@ type UserService interface {
 	ExistsByUsername(username string) (bool, error)
 	GetById(id uint) (models.User, error)
 	GetByUsername(username string) (models.User, error)
-	GetByUid(uid string) (models.User, error)
-	GetByUids(uids []string) ([]models.User, error)
 }
 
 type userService struct {
@@ -35,7 +32,6 @@ func NewUserService(db *gorm.DB, log log.Interface) UserService {
 
 func (s *userService) Create(username, hashedPassword string) (models.User, error) {
 	var user models.User
-	user.Uid = ksuid.New().String()
 	user.Username = username
 	user.Password = hashedPassword
 	user.CreatedAt = time.Now()
@@ -88,27 +84,4 @@ func (s *userService) GetByUsername(username string) (models.User, error) {
 		}
 	}
 	return user, nil
-}
-
-func (s *userService) GetByUid(uid string) (models.User, error) {
-	s.log.Info("getting user by uid", "uid", uid)
-	var user models.User
-	if err := s.db.Where("uid = ?", uid).First(&user).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			s.log.Info("user not found", "uid", uid)
-			return user, ErrUserNotFound
-		} else {
-			return user, err
-		}
-	}
-	return user, nil
-}
-
-func (s *userService) GetByUids(uids []string) ([]models.User, error) {
-	s.log.Info("getting users by uids", "uids", uids)
-	var users []models.User
-	if err := s.db.Where("uid IN (?)", uids).Find(&users).Error; err != nil {
-		return users, err
-	}
-	return users, nil
 }

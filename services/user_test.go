@@ -4,13 +4,17 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/modhanami/boinger/models"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
 	"testing"
 )
 
 func TestUserService_Create(t *testing.T) {
 	service, mock := initServiceWithMocks(t)
 
-	user := models.NewUser("A1", "bingbong", "eeur")
+	user := models.User{
+		Username: "bingbong",
+		Password: "eeur",
+	}
 
 	rows := createUserRows()
 	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
@@ -28,10 +32,13 @@ func TestUserService_Create(t *testing.T) {
 func TestUserService_Create_DuplicateUsername(t *testing.T) {
 	service, mock := initServiceWithMocks(t)
 
-	user := models.NewUser("A1", "bingbong", "eeur")
+	user := models.User{
+		Username: "bingbong",
+		Password: "eeur",
+	}
 
 	rows := createUserRows()
-	rows.AddRow(user.Uid, user.Username, user.Password, user.CreatedAt)
+	rows.AddRow(user.ID, user.Username, user.Password, user.CreatedAt)
 	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
 
 	_, err := service.Create(user.Username, user.Password)
@@ -43,10 +50,13 @@ func TestUserService_Create_DuplicateUsername(t *testing.T) {
 func TestUserService_Exists_Found(t *testing.T) {
 	service, mock := initServiceWithMocks(t)
 
-	user := models.NewUser("A1", "bingbong", "eeur")
+	user := models.User{
+		Username: "bingbong",
+		Password: "eeur",
+	}
 
 	rows := createUserRows()
-	rows.AddRow(user.Uid, user.Username, user.Password, user.CreatedAt)
+	rows.AddRow(user.ID, user.Username, user.Password, user.CreatedAt)
 	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
 
 	exists, err := service.ExistsByUsername(user.Username)
@@ -70,15 +80,21 @@ func TestUserService_Exists_NotFound(t *testing.T) {
 func TestUserService_GetById_Found(t *testing.T) {
 	service, mock := initServiceWithMocks(t)
 
-	user := models.NewUser("A1", "bingbong", "eeur")
+	user := models.User{
+		Model: gorm.Model{
+			ID: 1,
+		},
+		Username: "bingbong",
+		Password: "eeur",
+	}
 
 	rows := createUserRowsWithId()
-	rows.AddRow(1, user.Uid, user.Username, user.Password, user.CreatedAt)
+	rows.AddRow(1, user.ID, user.Username, user.Password, user.CreatedAt)
 	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
 
 	user, err := service.GetById(1)
 	assert.NoError(t, err)
-	assert.Equal(t, user.Uid, "A1")
+	assert.Equal(t, user.ID, "A1")
 }
 
 func TestUserService_GetById_NotFound(t *testing.T) {
@@ -96,15 +112,18 @@ func TestUserService_GetById_NotFound(t *testing.T) {
 func TestUserService_GetByUsername_Found(t *testing.T) {
 	service, mock := initServiceWithMocks(t)
 
-	user := models.NewUser("A1", "bingbong", "eeur")
+	user := models.User{
+		Username: "bingbong",
+		Password: "eeur",
+	}
 
 	rows := createUserRows()
-	rows.AddRow(user.Uid, user.Username, user.Password, user.CreatedAt)
+	rows.AddRow(user.ID, user.Username, user.Password, user.CreatedAt)
 	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
 
 	user, err := service.GetByUsername(user.Username)
 	assert.NoError(t, err)
-	assert.Equal(t, user.Uid, "A1")
+	assert.Equal(t, user.ID, "A1")
 }
 
 func TestUserService_GetByUsername_NotFound(t *testing.T) {
@@ -114,32 +133,6 @@ func TestUserService_GetByUsername_NotFound(t *testing.T) {
 	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
 
 	_, err := service.GetByUsername("whosthis")
-
-	assert.Error(t, err)
-	assert.Equal(t, err, ErrUserNotFound)
-}
-
-func TestUserService_GetByUid_Found(t *testing.T) {
-	service, mock := initServiceWithMocks(t)
-
-	user := models.NewUser("A1", "bingbong", "eeur")
-
-	rows := createUserRows()
-	rows.AddRow(user.Uid, user.Username, user.Password, user.CreatedAt)
-	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
-
-	user, err := service.GetByUid(user.Uid)
-	assert.NoError(t, err)
-	assert.Equal(t, user.Uid, "A1")
-}
-
-func TestUserService_GetByUid_NotFound(t *testing.T) {
-	service, mock := initServiceWithMocks(t)
-
-	rows := createUserRows()
-	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
-
-	_, err := service.GetByUid("whosthis")
 
 	assert.Error(t, err)
 	assert.Equal(t, err, ErrUserNotFound)

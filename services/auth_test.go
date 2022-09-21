@@ -29,13 +29,13 @@ func setup(t *testing.T) *gorm.DB {
 
 func TestAuthService_Authenticate(t *testing.T) {
 	gdb := setup(t)
-	gdb.Create(&models.User{Uid: "uid1", Username: "user1", Password: "password1"})
+	gdb.Create(&models.User{Username: "user1", Password: "password1"})
 	service := NewAuthService(gdb, NewUserService(gdb, log.NewNoop()), NewUserTokenService(gdb), &fakePasswordHasher{})
 
 	user, err := service.Authenticate("user1", "password1")
 
 	assert.NoError(t, err)
-	assert.Equal(t, "uid1", user.Uid)
+	assert.Equal(t, "uid1", user.ID)
 }
 
 func TestAuthService_Authenticate_UserNotFound(t *testing.T) {
@@ -51,7 +51,7 @@ func TestAuthService_Authenticate_UserNotFound(t *testing.T) {
 
 func TestAuthService_Authenticate_InvalidCredentials(t *testing.T) {
 	gdb := setup(t)
-	gdb.Create(&models.User{Uid: "uid1", Username: "user1", Password: "password1"})
+	gdb.Create(&models.User{Username: "user1", Password: "password1"})
 	service := NewAuthService(gdb, NewUserService(gdb, log.NewNoop()), NewUserTokenService(gdb), &fakePasswordHasher{})
 
 	user, err := service.Authenticate("user1", "password2")
@@ -73,7 +73,7 @@ func TestAuthService_Register(t *testing.T) {
 
 func TestAuthService_Register_UserAlreadyExists(t *testing.T) {
 	gdb := setup(t)
-	gdb.Create(&models.User{Uid: "uid1", Username: "user1", Password: "password1"})
+	gdb.Create(&models.User{Username: "user1", Password: "password1"})
 	service := NewAuthService(gdb, NewUserService(gdb, log.NewNoop()), NewUserTokenService(gdb), &fakePasswordHasher{})
 
 	user, err := service.Register("user1", "password1")

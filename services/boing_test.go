@@ -11,15 +11,15 @@ func TestBoingService_List(t *testing.T) {
 	service, mock := initBoingServiceWithMocks(t)
 
 	var boings = []models.Boing{
-		models.NewBoing("A1", "boing1", 0, "u0"),
-		models.NewBoing("A2", "boing2", 0, "u0"),
-		models.NewBoing("A3", "boing3", 0, "u0"),
+		models.NewBoing("A1", "boing1", 0),
+		models.NewBoing("A2", "boing2", 0),
+		models.NewBoing("A3", "boing3", 0),
 	}
 
 	rows := createBoingRows()
 
 	for _, boing := range boings {
-		rows = rows.AddRow(boing.Uid, boing.Text, boing.UserId, boing.UserUid, boing.CreatedAt)
+		rows = rows.AddRow(boing.Id, boing.Text, boing.UserId, boing.CreatedAt)
 	}
 
 	mock.ExpectQuery("SELECT *").WillReturnRows(rows)
@@ -44,13 +44,13 @@ func TestBoingService_List_UnexpectedDBError(t *testing.T) {
 func TestBoingService_Create(t *testing.T) {
 	service, mock := initBoingServiceWithMocks(t)
 
-	boing := models.NewBoing("A1", "boing1", 0, "u0")
+	boing := models.NewBoing("A1", "boing1", 0)
 
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	err := service.Create(boing.Text, 0, "u0")
+	err := service.Create(boing.Text, 0)
 
 	assert.NoError(t, err)
 }
@@ -62,7 +62,7 @@ func TestBoingService_Create_Failed(t *testing.T) {
 	mock.ExpectExec("INSERT INTO").WillReturnError(ErrBoingCreationFailed)
 	mock.ExpectRollback()
 
-	err := service.Create("", 0, "u0")
+	err := service.Create("", 0)
 
 	assert.Error(t, err)
 	assert.Equal(t, err, ErrBoingCreationFailed)
@@ -71,10 +71,10 @@ func TestBoingService_Create_Failed(t *testing.T) {
 func TestBoingService_GetById(t *testing.T) {
 	service, mock := initBoingServiceWithMocks(t)
 
-	boing := models.NewBoing("A1", "boing1", 0, "u0")
+	boing := models.NewBoing("A1", "boing1", 0)
 
 	rows := createBoingRows()
-	rows.AddRow(boing.Uid, boing.Text, boing.UserId, boing.UserUid, boing.CreatedAt)
+	rows.AddRow(boing.Id, boing.Text, boing.UserId, boing.CreatedAt)
 
 	mock.ExpectQuery("SELECT").WillReturnRows(rows)
 

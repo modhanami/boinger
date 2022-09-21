@@ -47,7 +47,7 @@ func (s *userTokenService) Create(user *models.User, options CreateOptions) (Use
 		exp = options.Exp
 	}
 
-	claims := NewUserClaimsWithExp(user.Uid, user.Username, exp)
+	claims := NewUserClaimsWithExp(user.ID, user.Username, exp)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	tokenString, err := token.SignedString(hmacSampleSecret)
@@ -56,19 +56,19 @@ func (s *userTokenService) Create(user *models.User, options CreateOptions) (Use
 }
 
 type UserClaims struct {
-	Uid      string `json:"uid"`
+	ID       uint   `json:"id"`
 	Username string `json:"username"`
 	jwt.RegisteredClaims
 }
 
-func NewUserClaims(uid string, username string) UserClaims {
+func NewUserClaims(id uint, username string) UserClaims {
 	oneWeekFromNow := time.Now().AddDate(0, 0, 7)
-	return NewUserClaimsWithExp(uid, username, oneWeekFromNow)
+	return NewUserClaimsWithExp(id, username, oneWeekFromNow)
 }
 
-func NewUserClaimsWithExp(uid string, username string, exp time.Time) UserClaims {
+func NewUserClaimsWithExp(id uint, username string, exp time.Time) UserClaims {
 	return UserClaims{
-		Uid:      uid,
+		ID:       id,
 		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(exp),
@@ -90,7 +90,7 @@ func (s *userTokenService) Verify(rawToken string) (UserClaims, error) {
 		return UserClaims{}, ErrInvalidToken
 	}
 
-	return NewUserClaims(claims.Uid, claims.Username), nil
+	return NewUserClaims(claims.ID, claims.Username), nil
 }
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_-"

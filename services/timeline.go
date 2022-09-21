@@ -1,3 +1,5 @@
+//go:build exclude
+
 package services
 
 import (
@@ -13,11 +15,11 @@ type timelineService struct {
 	boingService BoingService
 }
 
-type UserUidToUser map[string]models.User
+type UserIdToUser map[uint]models.User
 
 type timelineResponse struct {
 	Boings *[]models.Boing `json:"boings"`
-	Users  *UserUidToUser  `json:"users"`
+	Users  *UserIdToUser   `json:"users"`
 }
 
 func newTimelineResponse(boings *[]models.Boing, users *[]models.User) timelineResponse {
@@ -67,10 +69,10 @@ func extractUserUidsFromBoings(boings *[]models.Boing) []string {
 	return uids
 }
 
-func makeUserUidToUserMap(users *[]models.User) UserUidToUser {
-	userUidToUser := make(UserUidToUser)
+func makeUserUidToUserMap(users *[]models.User) UserIdToUser {
+	userUidToUser := make(UserIdToUser)
 	for _, user := range *users {
-		userUidToUser[user.Uid] = user
+		userUidToUser[user.ID] = user
 	}
 	return userUidToUser
 }

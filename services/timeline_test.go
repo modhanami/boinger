@@ -1,3 +1,5 @@
+//go:build exclude
+
 package services
 
 import (
@@ -29,18 +31,12 @@ func TestTimelineService_List(t *testing.T) {
 func makeUsersFixture() []models.User {
 	return []models.User{
 		{
-			Id:        1,
-			Uid:       "u1",
-			Username:  "user1",
-			Password:  "pass1",
-			CreatedAt: time.Now().AddDate(0, 0, -2),
+			Username: "user1",
+			Password: "pass1",
 		},
 		{
-			Id:        2,
-			Uid:       "u2",
-			Username:  "user2",
-			Password:  "pass2",
-			CreatedAt: time.Now().AddDate(0, 0, -1),
+			Username: "user2",
+			Password: "pass2",
 		},
 	}
 }

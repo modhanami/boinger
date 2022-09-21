@@ -23,7 +23,7 @@ func MakeVerifyJWTUserTokenMiddleware(s services.UserTokenService) gin.HandlerFu
 			return
 		}
 
-		c.Set(endpoints.UserIdKey, claims.Uid)
+		c.Set(endpoints.UserIdKey, claims.ID)
 		c.Set(endpoints.UserClaimsKey, claims)
 	}
 }

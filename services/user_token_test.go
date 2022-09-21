@@ -1,3 +1,5 @@
+//go:build exclude
+
 package services
 
 import (
@@ -41,7 +43,7 @@ func TestVerifyValidUserToken(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, userClaims)
-	assert.Equal(t, user.Uid, userClaims.Uid)
+	assert.Equal(t, user.ID, userClaims.ID)
 }
 
 func TestFailVerifyExpiredUserToken(t *testing.T) {

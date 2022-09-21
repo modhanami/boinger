@@ -15,7 +15,7 @@ var (
 type BoingService interface {
 	List() ([]models.Boing, error)
 	GetById(id uint) (models.Boing, error)
-	Create(text string, userId uint, userUid string) error
+	Create(text string, userId uint) error
 }
 
 type boingService struct {
@@ -46,10 +46,10 @@ func (s *boingService) GetById(id uint) (models.Boing, error) {
 	return boing, nil
 }
 
-func (s *boingService) Create(text string, userId uint, userUid string) error {
+func (s *boingService) Create(text string, userId uint) error {
 	uid := ksuid.New().String()
 
-	boing := models.NewBoing(uid, text, userId, userUid)
+	boing := models.NewBoing(uid, text, userId)
 
 	if err := s.db.Create(&boing).Error; err != nil {
 		return ErrBoingCreationFailed

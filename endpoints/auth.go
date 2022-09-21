@@ -11,13 +11,13 @@ var UserIdKey = "userId"
 var AuthTokenCookieName = "auth_token"
 
 type UserClaimsResponse struct {
-	Uid      string `json:"uid"`
+	ID       uint   `json:"id"`
 	Username string `json:"username"`
 }
 
 func NewUserClaimsResponseFromClaims(claims *services.UserClaims) *UserClaimsResponse {
 	return &UserClaimsResponse{
-		Uid:      claims.Uid,
+		ID:       claims.ID,
 		Username: claims.Username,
 	}
 }
@@ -50,7 +50,7 @@ func MakeLoginEndpoint(s services.AuthService, userTokenService services.UserTok
 			return
 		}
 
-		refreshToken, err := userTokenService.RenewRefreshToken(user.Id)
+		refreshToken, err := userTokenService.RenewRefreshToken(user.ID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponseFromError(err))
 			return
