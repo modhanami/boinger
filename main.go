@@ -5,14 +5,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/modhanami/boinger/endpoints"
 	"github.com/modhanami/boinger/hashers"
-	"github.com/modhanami/boinger/log"
+	"github.com/modhanami/boinger/logger"
 	"github.com/modhanami/boinger/middlewares"
 	"github.com/modhanami/boinger/models"
 	"github.com/modhanami/boinger/services"
-	"go.uber.org/zap"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	gormlogger "gorm.io/gorm/logger"
 	log2 "log"
 	"net/http"
 	"os"
@@ -21,13 +20,10 @@ import (
 func main() {
 	parseFlagsAndEnvVars()
 	db := initDB()
-	zapLogger, _ := zap.NewProduction()
-	defer zapLogger.Sync()
 	gin.SetMode(gin.DebugMode)
 
-	zapSugaredLogger := zapLogger.Sugar()
-
-	userService := services.NewUserService(db, log.NewZapLoggerAdapter(zapSugaredLogger.With("service", "user")))
+	l := logger.NewZapLogger()
+	userService := services.NewUserService(db, l)
 	boingService := services.NewBoingService(db)
 	userTokenService := services.NewUserTokenService(db)
 	authService := services.NewAuthService(db, userService, userTokenService, hashers.NewBcryptHasher())
@@ -80,7 +76,7 @@ func parseFlagsAndEnvVars() {
 
 func initDB() *gorm.DB {
 	db, err := gorm.Open(sqlite.Open("dev.db"), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: gormlogger.Default.LogMode(gormlogger.Info),
 	})
 	if err != nil {
 		panic(err)
