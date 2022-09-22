@@ -10,7 +10,7 @@ import (
 )
 
 func TestCreateUserToken(t *testing.T) {
-	gdb := setup(t)
+	gdb := setupDBForAuthService(t)
 	var user = &models.User{
 		Id:       123,
 		Uid:      "A1",
@@ -26,7 +26,7 @@ func TestCreateUserToken(t *testing.T) {
 }
 
 func TestVerifyValidUserToken(t *testing.T) {
-	gdb := setup(t)
+	gdb := setupDBForAuthService(t)
 	var user = &models.User{
 		Id:       123,
 		Uid:      "A1",
@@ -47,7 +47,7 @@ func TestVerifyValidUserToken(t *testing.T) {
 }
 
 func TestFailVerifyExpiredUserToken(t *testing.T) {
-	gdb := setup(t)
+	gdb := setupDBForAuthService(t)
 	var user = &models.User{
 		Id:       123,
 		Uid:      "A1",
@@ -64,7 +64,7 @@ func TestFailVerifyExpiredUserToken(t *testing.T) {
 }
 
 func TestRenewRefreshToken(t *testing.T) {
-	gdb := setup(t)
+	gdb := setupDBForAuthService(t)
 	service := NewUserTokenService(gdb)
 	user := models.User{Uid: "uid1", Username: "user1", Password: "password1"}
 	gdb.Create(&user)
@@ -78,7 +78,7 @@ func TestRenewRefreshToken(t *testing.T) {
 }
 
 func TestRenewRefreshToken_RevokesOldRefreshToken(t *testing.T) {
-	gdb := setup(t)
+	gdb := setupDBForAuthService(t)
 	service := NewUserTokenService(gdb)
 	user := models.User{Uid: "uid1", Username: "user1", Password: "password1"}
 	gdb.Create(&user)

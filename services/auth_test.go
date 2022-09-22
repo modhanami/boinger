@@ -2,22 +2,18 @@ package services
 
 import (
 	"errors"
-	"fmt"
-	"github.com/modhanami/boinger/log"
+	"github.com/modhanami/boinger/logger"
 	"github.com/modhanami/boinger/models"
+	"github.com/modhanami/boinger/services/testutils"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"testing"
 )
 
 var InvalidCredentials = "invalid credentials"
 
-func setup(t *testing.T) *gorm.DB {
-	gdb, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
-	if err != nil {
-		t.Fail()
-	}
+func setupDBForAuthService(t *testing.T) *gorm.DB {
+	gdb, err := testutils.InitInMemDB(t)
 
 	err = gdb.AutoMigrate(&models.User{}, &models.RefreshToken{})
 	if err != nil {
@@ -28,75 +24,122 @@ func setup(t *testing.T) *gorm.DB {
 }
 
 func TestAuthService_Authenticate(t *testing.T) {
-	gdb := setup(t)
-	gdb.Create(&models.User{Username: "user1", Password: "password1"})
-	service := NewAuthService(gdb, NewUserService(gdb, log.NewNoop()), NewUserTokenService(gdb), &fakePasswordHasher{})
+	tests := []struct {
+		name        string
+		seed        func(db *gorm.DB)
+		username    string
+		password    string
+		expectedErr error
+	}{
+		{
+			name: "user found",
+			seed: func(db *gorm.DB) {
+				db.Create(&models.User{Username: "user1", Password: "password1"})
+			},
+			username:    "user1",
+			password:    "password1",
+			expectedErr: nil,
+		},
+		{
+			name:        "user not found",
+			seed:        func(db *gorm.DB) {},
+			username:    "user1",
+			password:    "password1",
+			expectedErr: ErrUserNotFound,
+		},
+		{
+			name: "invalid credentials",
+			seed: func(db *gorm.DB) {
+				db.Create(&models.User{Username: "user1", Password: "password1"})
+			},
+			username:    "user1",
+			password:    "password2",
+			expectedErr: ErrInvalidCredentials,
+		},
+	}
 
-	user, err := service.Authenticate("user1", "password1")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gdb := setupDBForAuthService(t)
+			tt.seed(gdb)
+			userService := NewUserService(gdb, logger.NewNoopLogger())
+			tokenService := NewUserTokenService(gdb)
+			service := NewAuthService(gdb, userService, tokenService, &fakePasswordHasher{})
 
-	assert.NoError(t, err)
-	assert.Equal(t, "uid1", user.ID)
-}
+			user, err := service.Authenticate(tt.username, tt.password)
 
-func TestAuthService_Authenticate_UserNotFound(t *testing.T) {
-	gdb := setup(t)
-	service := NewAuthService(gdb, NewUserService(gdb, log.NewNoop()), NewUserTokenService(gdb), &fakePasswordHasher{})
-
-	user, err := service.Authenticate("user1", "password1")
-
-	assert.Equal(t, err, ErrUserNotFound)
-	assert.Empty(t, user)
-
-}
-
-func TestAuthService_Authenticate_InvalidCredentials(t *testing.T) {
-	gdb := setup(t)
-	gdb.Create(&models.User{Username: "user1", Password: "password1"})
-	service := NewAuthService(gdb, NewUserService(gdb, log.NewNoop()), NewUserTokenService(gdb), &fakePasswordHasher{})
-
-	user, err := service.Authenticate("user1", "password2")
-
-	fmt.Println(err)
-	assert.Equal(t, err, ErrInvalidCredentials)
-	assert.Empty(t, user)
+			assert.ErrorIs(t, err, tt.expectedErr)
+			if tt.expectedErr == nil {
+				assert.Equal(t, tt.username, user.Username)
+			} else {
+				assert.Nil(t, user)
+			}
+		})
+	}
 }
 
 func TestAuthService_Register(t *testing.T) {
-	gdb := setup(t)
-	service := NewAuthService(gdb, NewUserService(gdb, log.NewNoop()), NewUserTokenService(gdb), &fakePasswordHasher{})
+	tests := []struct {
+		name        string
+		seed        func(db *gorm.DB)
+		username    string
+		email       string
+		password    string
+		expectedErr error
+	}{
+		{
+			name:        "user not found",
+			seed:        func(db *gorm.DB) {},
+			username:    "user1",
+			email:       "user1@test.com",
+			password:    "password1",
+			expectedErr: nil,
+		},
+		{
+			name: "user already exists",
+			seed: func(db *gorm.DB) {
+				db.Create(&models.User{Username: "user1", Password: "password1"})
+			},
+			username:    "user1",
+			email:       "user1@test.com",
+			password:    "password1",
+			expectedErr: ErrUserAlreadyExists,
+		},
+		{
+			name:        "invalid credentials",
+			seed:        func(db *gorm.DB) {},
+			username:    "user1",
+			email:       "user1@test.com",
+			password:    InvalidCredentials,
+			expectedErr: ErrInvalidCredentials,
+		},
+	}
 
-	user, err := service.Register("user1", "password1")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gdb := setupDBForAuthService(t)
+			tt.seed(gdb)
+			userService := NewUserService(gdb, logger.NewNoopLogger())
+			tokenService := NewUserTokenService(gdb)
+			service := NewAuthService(gdb, userService, tokenService, &fakePasswordHasher{})
 
-	assert.NoError(t, err)
-	assert.Equal(t, "user1", user.Username)
-}
+			user, err := service.Register(tt.username, tt.email, tt.password)
 
-func TestAuthService_Register_UserAlreadyExists(t *testing.T) {
-	gdb := setup(t)
-	gdb.Create(&models.User{Username: "user1", Password: "password1"})
-	service := NewAuthService(gdb, NewUserService(gdb, log.NewNoop()), NewUserTokenService(gdb), &fakePasswordHasher{})
-
-	user, err := service.Register("user1", "password1")
-
-	assert.Equal(t, err, ErrUserAlreadyExists)
-	assert.Empty(t, user)
-}
-
-func TestAuthService_Register_InvalidCredentials(t *testing.T) {
-	gdb := setup(t)
-	service := NewAuthService(gdb, NewUserService(gdb, log.NewNoop()), NewUserTokenService(gdb), &fakePasswordHasher{})
-
-	user, err := service.Register("user1", InvalidCredentials)
-
-	assert.Equal(t, err, ErrInvalidCredentials)
-	assert.Empty(t, user)
+			assert.ErrorIs(t, err, tt.expectedErr)
+			if tt.expectedErr == nil {
+				assert.Equal(t, tt.username, user.Username)
+			} else {
+				assert.Nil(t, user)
+			}
+		})
+	}
 }
 
 type fakePasswordHasher struct{}
 
 func (n *fakePasswordHasher) HashPassword(password string) (string, error) {
 	if password == InvalidCredentials {
-		return "", ErrInvalidCredentials
+		return "", errors.New("fakePasswordHasher: invalid credentials")
 	}
 	return password, nil
 }
@@ -108,61 +151,3 @@ func (n *fakePasswordHasher) ComparePassword(hashedPassword, password string) er
 
 	return errors.New("fakePasswordHasher: password does not match")
 }
-
-//func initAuthServiceWithSuccessMocks(t *testing.T) (AuthService, sqlmock.Sqlmock) {
-//	db, mock := initMockDB(t)
-//	return NewAuthService(db, &mockUserServiceSuccess{}, &mockUserTokenService{}, &mockPasswordHasher{}), mock
-//}
-//
-//func initAuthServiceWithErrorMocks(t *testing.T) (AuthService, sqlmock.Sqlmock) {
-//	db, mock := initMockDB(t)
-//	return NewAuthService(db, &mockUserServiceError{}, &mockUserTokenService{}, &mockPasswordHasher{}), mock
-//}
-//
-//type mockPasswordHasher struct{}
-//
-//func (m *mockPasswordHasher) HashPassword(password string) (string, error) {
-//	return password, nil
-//}
-//
-//func (m *mockPasswordHasher) ComparePassword(string, string) error {
-//	return nil
-//}
-//
-//type mockUserTokenService struct {
-//	UserTokenService
-//}
-//
-//type mockUserServiceSuccess struct {
-//	UserService
-//}
-//
-//func (m *mockUserServiceSuccess) GetByUsername(username string) (models.User, error) {
-//	return models.User{
-//		Uid:       "uid",
-//		Username:  username,
-//		Password:  "password",
-//		CreatedAt: time.Date(2020, time.May, 5, 8, 0, 0, 0, time.UTC),
-//	}, nil
-//}
-//
-//func (m *mockUserServiceSuccess) ExistsByUsername(string) (bool, error) {
-//	return false, nil
-//}
-//
-//func (m *mockUserServiceSuccess) Create(username string, password string) (models.User, error) {
-//	return models.User{
-//		Uid:       "uid",
-//		Username:  username,
-//		Password:  password,
-//		CreatedAt: time.Date(2020, time.May, 5, 8, 0, 0, 0, time.UTC),
-//	}, nil
-//}
-//
-//type mockUserServiceError struct {
-//	UserService
-//}
-//
-//func (m *mockUserServiceError) GetByUsername(username string) (models.User, error) {
-//	return models.User{}, ErrUserNotFound
-//}

@@ -1,159 +1,220 @@
 package services
 
 import (
-	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/modhanami/boinger/logger"
 	"github.com/modhanami/boinger/models"
+	"github.com/modhanami/boinger/services/testutils"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"testing"
 )
 
+func setupDBForUserService(t *testing.T) *gorm.DB {
+	gdb, err := testutils.InitInMemDB(t)
+
+	err = gdb.AutoMigrate(&models.User{})
+	if err != nil {
+		return nil
+	}
+
+	return gdb.Debug().Begin()
+}
+
 func TestUserService_Create(t *testing.T) {
-	service, mock := initServiceWithMocks(t)
-
-	user := models.User{
-		Username: "bingbong",
-		Password: "eeur",
-	}
-
-	rows := createUserRows()
-	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
-	mock.ExpectBegin()
-	mock.ExpectExec("INSERT INTO").WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectCommit()
-
-	user, err := service.Create(user.Username, user.Password)
-
-	assert.NoError(t, err)
-	assert.Equal(t, user.Username, "bingbong")
-	assert.NotEqual(t, user.Password, "eeur")
-}
-
-func TestUserService_Create_DuplicateUsername(t *testing.T) {
-	service, mock := initServiceWithMocks(t)
-
-	user := models.User{
-		Username: "bingbong",
-		Password: "eeur",
-	}
-
-	rows := createUserRows()
-	rows.AddRow(user.ID, user.Username, user.Password, user.CreatedAt)
-	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
-
-	_, err := service.Create(user.Username, user.Password)
-
-	assert.Error(t, err)
-	assert.Equal(t, err, ErrUserAlreadyExists)
-}
-
-func TestUserService_Exists_Found(t *testing.T) {
-	service, mock := initServiceWithMocks(t)
-
-	user := models.User{
-		Username: "bingbong",
-		Password: "eeur",
-	}
-
-	rows := createUserRows()
-	rows.AddRow(user.ID, user.Username, user.Password, user.CreatedAt)
-	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
-
-	exists, err := service.ExistsByUsername(user.Username)
-
-	assert.NoError(t, err)
-	assert.True(t, exists)
-}
-
-func TestUserService_Exists_NotFound(t *testing.T) {
-	service, mock := initServiceWithMocks(t)
-
-	rows := createUserRows()
-	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
-
-	exists, err := service.ExistsByUsername("whosthis")
-
-	assert.NoError(t, err)
-	assert.False(t, exists)
-}
-
-func TestUserService_GetById_Found(t *testing.T) {
-	service, mock := initServiceWithMocks(t)
-
-	user := models.User{
-		Model: gorm.Model{
-			ID: 1,
+	tests := []struct {
+		name        string
+		seed        func(db *gorm.DB)
+		user        *models.User
+		expectedErr error
+	}{
+		{
+			name: "create user",
+			seed: func(db *gorm.DB) {},
+			user: &models.User{
+				Username: "user1",
+				Email:    "email1@test.com",
+				Password: "password1",
+			},
+			expectedErr: nil,
 		},
-		Username: "bingbong",
-		Password: "eeur",
+		{
+			name: "create user with duplicate username",
+			seed: func(db *gorm.DB) {
+				db.Create(&models.User{
+					Username: "user1",
+					Email:    "email1@test.com",
+					Password: "password1",
+				})
+			},
+			user: &models.User{
+				Username: "user1",
+				Email:    "email2@test.com",
+				Password: "password1",
+			},
+			expectedErr: ErrUserCreationFailed,
+		},
+		{
+			name: "create user with duplicate email",
+			seed: func(db *gorm.DB) {
+				db.Create(&models.User{
+					Username: "user1",
+					Email:    "email1@test.com",
+					Password: "password1",
+				})
+			},
+			user: &models.User{
+				Username: "user2",
+				Email:    "email1@test.com",
+				Password: "password1",
+			},
+			expectedErr: ErrUserCreationFailed,
+		},
 	}
 
-	rows := createUserRowsWithId()
-	rows.AddRow(1, user.ID, user.Username, user.Password, user.CreatedAt)
-	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := setupDBForUserService(t)
+			tt.seed(db)
+			service := NewUserService(db, logger.NewNoopLogger())
 
-	user, err := service.GetById(1)
-	assert.NoError(t, err)
-	assert.Equal(t, user.ID, "A1")
+			user, err := service.Create(tt.user)
+
+			assert.ErrorIs(t, err, tt.expectedErr)
+			if tt.expectedErr == nil {
+				assert.NotEmpty(t, user.ID)
+			}
+		})
+	}
 }
 
-func TestUserService_GetById_NotFound(t *testing.T) {
-	service, mock := initServiceWithMocks(t)
-
-	rows := createUserRows()
-	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
-
-	_, err := service.GetById(1)
-
-	assert.Error(t, err)
-	assert.Equal(t, err, ErrUserNotFound)
-}
-
-func TestUserService_GetByUsername_Found(t *testing.T) {
-	service, mock := initServiceWithMocks(t)
-
-	user := models.User{
-		Username: "bingbong",
-		Password: "eeur",
+func TestUserService_ExistsByUsername(t *testing.T) {
+	tests := []struct {
+		name        string
+		seed        func(db *gorm.DB)
+		username    string
+		expectedErr error
+		expected    bool
+	}{
+		{
+			name: "exists",
+			seed: func(db *gorm.DB) {
+				db.Create(&models.User{
+					Username: "user1",
+					Email:    "email1@test.com",
+					Password: "password1",
+				})
+			},
+			username:    "user1",
+			expectedErr: nil,
+			expected:    true,
+		},
+		{
+			name:        "does not exist",
+			seed:        func(db *gorm.DB) {},
+			username:    "user1",
+			expectedErr: nil,
+			expected:    false,
+		},
 	}
 
-	rows := createUserRows()
-	rows.AddRow(user.ID, user.Username, user.Password, user.CreatedAt)
-	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := setupDBForUserService(t)
+			tt.seed(db)
+			service := NewUserService(db, logger.NewNoopLogger())
 
-	user, err := service.GetByUsername(user.Username)
-	assert.NoError(t, err)
-	assert.Equal(t, user.ID, "A1")
+			exists, err := service.ExistsByUsername(tt.username)
+
+			assert.ErrorIs(t, err, tt.expectedErr)
+			assert.Equal(t, tt.expected, exists)
+		})
+	}
 }
 
-func TestUserService_GetByUsername_NotFound(t *testing.T) {
-	service, mock := initServiceWithMocks(t)
+func TestUserService_GetById(t *testing.T) {
+	tests := []struct {
+		name        string
+		seed        func(db *gorm.DB)
+		id          uint
+		expectedErr error
+		expected    *models.User
+	}{
+		{
+			name: "found",
+			seed: func(db *gorm.DB) {
+				db.Create(&models.User{
+					Username: "user1",
+					Email:    "email1@test.com",
+					Password: "password1",
+				})
+			},
+			id:          1,
+			expectedErr: nil,
+		},
+		{
+			name:        "not found",
+			seed:        func(db *gorm.DB) {},
+			id:          1,
+			expectedErr: ErrUserNotFound,
+		},
+	}
 
-	rows := createUserRows()
-	mock.ExpectQuery("SELECT ").WillReturnRows(rows)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := setupDBForUserService(t)
+			tt.seed(db)
+			service := NewUserService(db, logger.NewNoopLogger())
 
-	_, err := service.GetByUsername("whosthis")
+			user, err := service.GetById(tt.id)
 
-	assert.Error(t, err)
-	assert.Equal(t, err, ErrUserNotFound)
+			assert.ErrorIs(t, err, tt.expectedErr)
+			if tt.expectedErr == nil {
+				assert.Equal(t, tt.id, user.ID)
+			}
+		})
+	}
 }
 
-func createUserRows() *sqlmock.Rows {
-	var columns = []string{"uid", "username", "password", "created_at"}
-	var rows = sqlmock.NewRows(columns)
-	return rows
-}
+func TestUserService_GetByUsername(t *testing.T) {
+	tests := []struct {
+		name        string
+		seed        func(db *gorm.DB)
+		username    string
+		expectedErr error
+		expected    *models.User
+	}{
+		{
+			name: "found",
+			seed: func(db *gorm.DB) {
+				db.Create(&models.User{
+					Username: "user1",
+					Email:    "email1@test.com",
+					Password: "password1",
+				})
+			},
+			username:    "user1",
+			expectedErr: nil,
+		},
+		{
+			name:        "not found",
+			seed:        func(db *gorm.DB) {},
+			username:    "user1",
+			expectedErr: ErrUserNotFound,
+		},
+	}
 
-func createUserRowsWithId() *sqlmock.Rows {
-	var columns = []string{"id", "uid", "username", "password", "created_at"}
-	var rows = sqlmock.NewRows(columns)
-	return rows
-}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := setupDBForUserService(t)
+			tt.seed(db)
+			service := NewUserService(db, logger.NewNoopLogger())
 
-func initServiceWithMocks(t *testing.T) (UserService, sqlmock.Sqlmock) {
-	db, mock := initMockDB(t)
-	serviceLogger := initLogger()
-	service := NewUserService(db, serviceLogger)
+			user, err := service.GetByUsername(tt.username)
 
-	return service, mock
+			assert.ErrorIs(t, err, tt.expectedErr)
+			if tt.expectedErr == nil {
+				assert.Equal(t, tt.username, user.Username)
+			}
+		})
+	}
 }

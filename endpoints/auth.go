@@ -47,7 +47,7 @@ func MakeLoginEndpoint(s services.AuthService, userTokenService services.UserTok
 			return
 		}
 
-		token, err := userTokenService.Create(&user, services.CreateOptions{})
+		token, err := userTokenService.Create(user, services.CreateOptions{})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponseFromError(err))
 			return
@@ -69,7 +69,7 @@ func MakeRegisterEndpoint(s services.AuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		username := c.PostForm("username")
 		password := c.PostForm("password")
-		_, err := s.Register(username, password)
+		_, err := s.Register(username, "", password)
 		if err != nil {
 			if err == services.ErrUserAlreadyExists {
 				c.JSON(http.StatusConflict, ErrorResponseFromError(err))

@@ -5,7 +5,6 @@ import (
 	"github.com/modhanami/boinger/logger"
 	"github.com/modhanami/boinger/models"
 	"gorm.io/gorm"
-	"time"
 )
 
 var (
@@ -15,7 +14,7 @@ var (
 )
 
 type UserService interface {
-	Create(username, password string) (models.User, error)
+	Create(user *models.User) (*models.User, error)
 	ExistsByUsername(username string) (bool, error)
 	GetById(id uint) (models.User, error)
 	GetByUsername(username string) (models.User, error)
@@ -30,18 +29,13 @@ func NewUserService(db *gorm.DB, log logger.Logger) UserService {
 	return &userService{db: db, log: log}
 }
 
-func (s *userService) Create(username, hashedPassword string) (models.User, error) {
-	var user models.User
-	user.Username = username
-	user.Password = hashedPassword
-	user.CreatedAt = time.Now()
-
+func (s *userService) Create(user *models.User) (*models.User, error) {
 	if err := s.db.Create(&user).Error; err != nil {
-		s.log.Error("failed to create user", "username", username, "error", err)
-		return user, ErrUserCreationFailed
+		s.log.Error("failed to create user", "username", user.Username, "error", err)
+		return nil, ErrUserCreationFailed
 	}
 
-	s.log.Info("user created", "username", username)
+	s.log.Info("user created", "username", user.Username)
 	return user, nil
 }
 
@@ -59,11 +53,11 @@ func (s *userService) ExistsByUsername(username string) (bool, error) { // TODO:
 }
 
 func (s *userService) GetById(id uint) (models.User, error) {
-	s.log.Info("getting user by id", "id", id)
+	s.log.Info("getting user by username", "username", id)
 	var user models.User
 	if err := s.db.First(&user, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			s.log.Info("user not found", "id", id)
+			s.log.Info("user not found", "username", id)
 			return user, ErrUserNotFound
 		} else {
 			return user, err
