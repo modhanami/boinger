@@ -16,8 +16,8 @@ var (
 )
 
 type UserTokenService interface {
-	Create(user *models.User, options CreateOptions) (UserToken, UserClaims, error)
-	Verify(token string) (UserClaims, error)
+	Create(user *models.User, options CreateOptions) (*UserToken, error)
+	Verify(string) (*UserClaims, error)
 	RenewRefreshToken(userId uint) (*models.RefreshToken, error)
 }
 
@@ -31,15 +31,20 @@ func NewUserTokenService(db *gorm.DB) UserTokenService {
 	}
 }
 
-var hmacSampleSecret = []byte("dont-mind-me-this-is-a-secret")
+var (
+	JWTSecret []byte
+)
 
 type CreateOptions struct {
 	Exp time.Time
 }
 
-type UserToken = string
+type UserToken struct {
+	Claims *UserClaims
+	Value  string
+}
 
-func (s *userTokenService) Create(user *models.User, options CreateOptions) (UserToken, UserClaims, error) {
+func (s *userTokenService) Create(user *models.User, options CreateOptions) (*UserToken, error) {
 	var exp time.Time
 	if options.Exp.IsZero() {
 		exp = time.Now().Add(time.Hour * 24 * 7)
@@ -49,10 +54,15 @@ func (s *userTokenService) Create(user *models.User, options CreateOptions) (Use
 
 	claims := NewUserClaimsWithExp(user.ID, user.Username, exp)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(JWTSecret)
+	if err != nil {
+		return &UserToken{}, err
+	}
 
-	tokenString, err := token.SignedString(hmacSampleSecret)
-
-	return tokenString, claims, err
+	return &UserToken{
+		Claims: claims,
+		Value:  tokenString,
+	}, err
 }
 
 type UserClaims struct {
@@ -61,13 +71,13 @@ type UserClaims struct {
 	jwt.RegisteredClaims
 }
 
-func NewUserClaims(id uint, username string) UserClaims {
+func NewUserClaims(id uint, username string) *UserClaims {
 	oneWeekFromNow := time.Now().AddDate(0, 0, 7)
 	return NewUserClaimsWithExp(id, username, oneWeekFromNow)
 }
 
-func NewUserClaimsWithExp(id uint, username string, exp time.Time) UserClaims {
-	return UserClaims{
+func NewUserClaimsWithExp(id uint, username string, exp time.Time) *UserClaims {
+	return &UserClaims{
 		ID:       id,
 		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -77,17 +87,17 @@ func NewUserClaimsWithExp(id uint, username string, exp time.Time) UserClaims {
 	}
 }
 
-func (s *userTokenService) Verify(rawToken string) (UserClaims, error) {
+func (s *userTokenService) Verify(rawToken string) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(rawToken, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return hmacSampleSecret, nil
+		return JWTSecret, nil
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
 	if err != nil {
-		return UserClaims{}, ErrUserClaimsParseFailed
+		return nil, ErrUserClaimsParseFailed
 	}
 
 	claims, ok := token.Claims.(*UserClaims)
 	if !ok || !token.Valid {
-		return UserClaims{}, ErrInvalidToken
+		return nil, ErrInvalidToken
 	}
 
 	return NewUserClaims(claims.ID, claims.Username), nil

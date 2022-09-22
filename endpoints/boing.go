@@ -38,7 +38,7 @@ func MakeCreateEndpoint(s services.BoingService, u services.UserService) gin.Han
 			return
 		}
 
-		userClaims, ok := rawUserClaims.(services.UserClaims)
+		userClaims, ok := rawUserClaims.(*services.UserClaims)
 		if !ok {
 			c.Status(http.StatusInternalServerError)
 		}

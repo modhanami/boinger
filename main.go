@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/gin-gonic/gin"
 	"github.com/modhanami/boinger/endpoints"
 	"github.com/modhanami/boinger/hashers"
@@ -12,10 +13,13 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	log2 "log"
 	"net/http"
+	"os"
 )
 
 func main() {
+	parseFlagsAndEnvVars()
 	db := initDB()
 	zapLogger, _ := zap.NewProduction()
 	defer zapLogger.Sync()
@@ -43,14 +47,35 @@ func main() {
 	//router.GET("/timeline", endpoints.MakeTimelineEndpoint(timelineService))
 
 	router.POST("/dont-mind-me-boinging-around", userTokenMiddleware, func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"userId": c.GetString(endpoints.UserIdKey),
-		})
+		rawUserClaims, exists := c.Get(endpoints.UserClaimsKey)
+		if !exists {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		userClaims, ok := rawUserClaims.(*services.UserClaims)
+		if !ok {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		c.JSON(http.StatusOK, userClaims)
 	})
 
 	port := getEnv("PORT", "30027")
 	address := "localhost:" + port
 	router.Run(address)
+}
+
+func parseFlagsAndEnvVars() {
+	flag.BoolVar(&endpoints.IsSecureCookieDisabled, "disable-secure-cookie", os.Getenv("DISABLE_SECURE_COOKIE") == "true", "disable secure cookie")
+	flag.Parse()
+
+	jwtSecret, exists := os.LookupEnv("JWT_SECRET")
+	if !exists {
+		log2.Fatalf("JWT_SECRET is not set")
+	}
+	services.JWTSecret = []byte(jwtSecret)
 }
 
 func initDB() *gorm.DB {

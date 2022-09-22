@@ -19,7 +19,7 @@ func TestCreateUserToken(t *testing.T) {
 	}
 	service := NewUserTokenService(gdb)
 
-	token, _, err := service.Create(user, CreateOptions{})
+	token, err := service.Create(user, CreateOptions{})
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, token)
@@ -34,7 +34,7 @@ func TestVerifyValidUserToken(t *testing.T) {
 		Password: "lookAtHimGo",
 	}
 	service := NewUserTokenService(gdb)
-	token, _, err := service.Create(user, CreateOptions{})
+	token, err := service.Create(user, CreateOptions{})
 	if err != nil {
 		t.FailNow()
 	}
@@ -55,7 +55,7 @@ func TestFailVerifyExpiredUserToken(t *testing.T) {
 		Password: "lookAtHimGo",
 	}
 	service := NewUserTokenService(gdb)
-	token, _, err := service.Create(user, CreateOptions{Exp: time.Now().Add(-time.Hour)})
+	token, err := service.Create(user, CreateOptions{Exp: time.Now().Add(-time.Hour)})
 
 	userClaims, err := service.Verify(token)
 

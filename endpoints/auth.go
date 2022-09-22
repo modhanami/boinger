@@ -3,12 +3,17 @@ package endpoints
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/modhanami/boinger/services"
+	"log"
 	"net/http"
+	"time"
 )
 
-var UserClaimsKey = "userClaims"
-var UserIdKey = "userId"
-var AuthTokenCookieName = "auth_token"
+var (
+	UserClaimsKey            = "userClaims"
+	RefreshTokenCookieName   = "refresh_token"
+	RefreshTokenCookieMaxAge = int(30 * 24 * time.Hour / time.Second)
+	IsSecureCookieDisabled   bool
+)
 
 type UserClaimsResponse struct {
 	ID       uint   `json:"id"`
@@ -22,15 +27,13 @@ func NewUserClaimsResponseFromClaims(claims *services.UserClaims) *UserClaimsRes
 	}
 }
 
-type tokenResponse struct {
-	Token        string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+type loginResponse struct {
+	AccessToken string `json:"access_token"`
 }
 
-func NewTokenResponse(token string, refreshToken string) *tokenResponse {
-	return &tokenResponse{
-		Token:        token,
-		RefreshToken: refreshToken,
+func NewLoginResponse(token string) *loginResponse {
+	return &loginResponse{
+		AccessToken: token,
 	}
 }
 
@@ -44,7 +47,7 @@ func MakeLoginEndpoint(s services.AuthService, userTokenService services.UserTok
 			return
 		}
 
-		token, _, err := userTokenService.Create(&user, services.CreateOptions{})
+		token, err := userTokenService.Create(&user, services.CreateOptions{})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponseFromError(err))
 			return
@@ -56,7 +59,9 @@ func MakeLoginEndpoint(s services.AuthService, userTokenService services.UserTok
 			return
 		}
 
-		c.JSON(http.StatusOK, NewTokenResponse(token, refreshToken.Token))
+		log.Println(RefreshTokenCookieMaxAge)
+		c.SetCookie(RefreshTokenCookieName, refreshToken.Token, RefreshTokenCookieMaxAge, "/", "", !IsSecureCookieDisabled, true)
+		c.JSON(http.StatusOK, NewLoginResponse(token.Value))
 	}
 }
 
@@ -85,7 +90,7 @@ func MakeUserInfoEndpoint() gin.HandlerFunc {
 			return
 		}
 
-		claims := rawClaims.(services.UserClaims)
-		c.JSON(http.StatusOK, NewUserClaimsResponseFromClaims(&claims))
+		claims := rawClaims.(*services.UserClaims)
+		c.JSON(http.StatusOK, NewUserClaimsResponseFromClaims(claims))
 	}
 }
