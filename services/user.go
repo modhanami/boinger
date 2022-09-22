@@ -2,7 +2,7 @@ package services
 
 import (
 	"errors"
-	"github.com/modhanami/boinger/log"
+	"github.com/modhanami/boinger/logger"
 	"github.com/modhanami/boinger/models"
 	"gorm.io/gorm"
 	"time"
@@ -23,10 +23,10 @@ type UserService interface {
 
 type userService struct {
 	db  *gorm.DB
-	log log.Interface
+	log logger.Logger
 }
 
-func NewUserService(db *gorm.DB, log log.Interface) UserService {
+func NewUserService(db *gorm.DB, log logger.Logger) UserService {
 	return &userService{db: db, log: log}
 }
 

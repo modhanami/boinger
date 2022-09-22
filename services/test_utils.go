@@ -2,7 +2,7 @@ package services
 
 import (
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/modhanami/boinger/log"
+	"github.com/modhanami/boinger/logger"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"testing"
@@ -27,6 +27,6 @@ func initMockDB(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
 	return db, mock
 }
 
-func initLogger() log.Interface {
-	return log.NewNoop()
+func initLogger() logger.Logger {
+	return logger.NewNoopLogger()
 }
