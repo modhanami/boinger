@@ -47,7 +47,7 @@ func (s *authService) Authenticate(username, password string) (*models.User, err
 		return nil, ErrInvalidCredentials
 	}
 
-	return &user, nil
+	return user, nil
 }
 
 func (s *authService) Register(username, email, password string) (*models.User, error) {
