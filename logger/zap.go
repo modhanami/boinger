@@ -37,3 +37,7 @@ func (l *zapLogger) Error(msg string, keysAndValues ...interface{}) {
 func (l *zapLogger) Fatal(msg string, keysAndValues ...interface{}) {
 	l.logger.Fatalw(msg, keysAndValues...)
 }
+
+func (l *zapLogger) With(args ...interface{}) Logger {
+	return &zapLogger{logger: l.logger.With(args...)}
+}

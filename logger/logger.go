@@ -6,4 +6,5 @@ type Logger interface {
 	Warn(msg string, keysAndValues ...interface{})
 	Error(msg string, keysAndValues ...interface{})
 	Fatal(msg string, keysAndValues ...interface{})
+	With(args ...interface{}) Logger
 }
