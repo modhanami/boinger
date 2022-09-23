@@ -69,7 +69,13 @@ func MakeRegisterEndpoint(s services.AuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		username := c.PostForm("username")
 		password := c.PostForm("password")
-		_, err := s.Register(username, "", password)
+		email := c.PostForm("email")
+		if username == "" || password == "" || email == "" {
+			c.JSON(http.StatusBadRequest, ErrorResponseFromError(services.ErrInvalidCredentials))
+			return
+		}
+
+		_, err := s.Register(username, email, password)
 		if err != nil {
 			if err == services.ErrUserAlreadyExists {
 				c.JSON(http.StatusConflict, ErrorResponseFromError(err))
