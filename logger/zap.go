@@ -9,7 +9,7 @@ type zapLogger struct {
 }
 
 func NewZapLogger() Logger {
-	l, _ := zap.NewProductionConfig().Build(zap.AddCallerSkip(1))
+	l, _ := zap.NewDevelopmentConfig().Build(zap.AddCallerSkip(1))
 	defer func(l *zap.Logger) {
 		_ = l.Sync()
 	}(l)
