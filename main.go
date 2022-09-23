@@ -22,9 +22,11 @@ func main() {
 	db := initDB()
 	gin.SetMode(gin.DebugMode)
 
-	l := logger.NewZapLogger()
-	userService := services.NewUserService(db, l)
-	boingService := services.NewBoingService(db)
+	baseLogger := logger.NewZapLogger()
+	boingServiceLogger := baseLogger.With("service", "boing")
+
+	userService := services.NewUserService(db, baseLogger)
+	boingService := services.NewBoingService(db, boingServiceLogger)
 	userTokenService := services.NewUserTokenService(db)
 	authService := services.NewAuthService(db, userService, userTokenService, hashers.NewBcryptHasher())
 	//timelineService := services.NewTimelineService(userService, boingService)

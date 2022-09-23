@@ -2,6 +2,7 @@ package services
 
 import (
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/modhanami/boinger/logger"
 	"github.com/modhanami/boinger/models"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -107,12 +108,12 @@ func TestBoingService_GetById_UnexpectedDBError(t *testing.T) {
 }
 
 func createBoingRows() *sqlmock.Rows {
-	var columns = []string{"uid", "text", "user_id", "user_uid", "created_at"}
+	var columns = []string{"uid", "text", "user_id", "created_at"}
 	var rows = sqlmock.NewRows(columns)
 	return rows
 }
 
 func initBoingServiceWithMocks(t *testing.T) (BoingService, sqlmock.Sqlmock) {
 	db, mock := initMockDB(t)
-	return NewBoingService(db), mock
+	return NewBoingService(db, logger.NewNoopLogger()), mock
 }

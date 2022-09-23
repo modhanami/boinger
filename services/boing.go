@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"github.com/modhanami/boinger/logger"
 	"github.com/modhanami/boinger/models"
 	"gorm.io/gorm"
 )
@@ -18,11 +19,12 @@ type BoingService interface {
 }
 
 type boingService struct {
-	db *gorm.DB
+	db  *gorm.DB
+	log logger.Logger
 }
 
-func NewBoingService(db *gorm.DB) BoingService {
-	return &boingService{db: db}
+func NewBoingService(db *gorm.DB, logger logger.Logger) BoingService {
+	return &boingService{db: db, log: logger}
 }
 
 func (s *boingService) List() ([]models.Boing, error) {
@@ -35,21 +37,30 @@ func (s *boingService) List() ([]models.Boing, error) {
 
 func (s *boingService) GetById(id uint) (models.Boing, error) {
 	var boing models.Boing
+	l := s.log.With("context", "boingService.GetById", "boingId", id)
 	if err := s.db.First(&boing, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
+			l.Info("boing not found")
 			return boing, ErrBoingNotFound
 		} else {
+			l.Error("unexpected db error", "error", err)
 			return boing, ErrUnexpectedDBError
 		}
 	}
+
+	l.Info("boing found", "boingId", boing.Id)
 	return boing, nil
 }
 
 func (s *boingService) Create(text string, userId uint) error {
 	boing := models.NewBoing(text, userId)
+	l := s.log.With("context", "boingService.Create")
 
 	if err := s.db.Create(&boing).Error; err != nil {
+		l.Error("failed to create boing", "error", err)
 		return ErrBoingCreationFailed
 	}
+
+	l.Info("boing created", "boingId", boing.Id)
 	return nil
 }
