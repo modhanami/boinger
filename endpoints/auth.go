@@ -2,6 +2,8 @@ package endpoints
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/modhanami/boinger/endpoints/response"
+	"github.com/modhanami/boinger/middlewares"
 	"github.com/modhanami/boinger/services"
 	"log"
 	"net/http"
@@ -9,7 +11,6 @@ import (
 )
 
 var (
-	UserClaimsKey            = "userClaims"
 	RefreshTokenCookieName   = "refresh_token"
 	RefreshTokenCookieMaxAge = int(30 * 24 * time.Hour / time.Second)
 	IsSecureCookieDisabled   bool
@@ -43,19 +44,19 @@ func MakeLoginEndpoint(s services.AuthService, userTokenService services.UserTok
 		password := c.PostForm("password")
 		user, err := s.Authenticate(username, password)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, ErrorResponseFromError(err))
+			c.JSON(http.StatusUnauthorized, response.ErrorResponseFromError(err))
 			return
 		}
 
 		token, err := userTokenService.Create(user, services.CreateOptions{})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, ErrorResponseFromError(err))
+			c.JSON(http.StatusInternalServerError, response.ErrorResponseFromError(err))
 			return
 		}
 
 		refreshToken, err := userTokenService.RenewRefreshToken(user.ID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, ErrorResponseFromError(err))
+			c.JSON(http.StatusInternalServerError, response.ErrorResponseFromError(err))
 			return
 		}
 
@@ -71,17 +72,17 @@ func MakeRegisterEndpoint(s services.AuthService) gin.HandlerFunc {
 		password := c.PostForm("password")
 		email := c.PostForm("email")
 		if username == "" || password == "" || email == "" {
-			c.JSON(http.StatusBadRequest, ErrorResponseFromError(services.ErrInvalidCredentials))
+			c.JSON(http.StatusBadRequest, response.ErrorResponseFromError(services.ErrInvalidCredentials))
 			return
 		}
 
 		_, err := s.Register(username, email, password)
 		if err != nil {
 			if err == services.ErrUserAlreadyExists {
-				c.JSON(http.StatusConflict, ErrorResponseFromError(err))
+				c.JSON(http.StatusConflict, response.ErrorResponseFromError(err))
 				return
 			}
-			c.JSON(http.StatusInternalServerError, ErrorResponseFromError(err))
+			c.JSON(http.StatusInternalServerError, response.ErrorResponseFromError(err))
 		}
 
 		c.Status(http.StatusCreated)
@@ -90,7 +91,7 @@ func MakeRegisterEndpoint(s services.AuthService) gin.HandlerFunc {
 
 func MakeUserInfoEndpoint() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rawClaims, exists := c.Get(UserClaimsKey)
+		rawClaims, exists := c.Get(middlewares.UserClaimsKey)
 		if !exists {
 			c.Status(http.StatusInternalServerError)
 			return

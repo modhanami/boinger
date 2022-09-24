@@ -3,7 +3,6 @@ package middlewares
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/modhanami/boinger/endpoints"
 	"github.com/modhanami/boinger/services"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -88,7 +87,7 @@ func TestVerifyJWTUserTokenMiddleware_SetUserClaimsInContext(t *testing.T) {
 	userTokenMiddleware := MakeVerifyJWTUserTokenMiddleware(userTokenService)
 	router := makeRouter()
 	router.GET("/", userTokenMiddleware, func(c *gin.Context) {
-		raw, exists := c.Get(endpoints.UserClaimsKey)
+		raw, exists := c.Get(UserClaimsKey)
 		assert.True(t, exists)
 		claims := raw.(*services.UserClaims)
 		assert.NotNil(t, claims)

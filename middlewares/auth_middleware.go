@@ -2,10 +2,14 @@ package middlewares
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/modhanami/boinger/endpoints"
+	"github.com/modhanami/boinger/endpoints/response"
 	"github.com/modhanami/boinger/services"
 	"net/http"
 	"strings"
+)
+
+const (
+	UserClaimsKey = "userClaims"
 )
 
 func MakeVerifyJWTUserTokenMiddleware(s services.UserTokenService) gin.HandlerFunc {
@@ -25,11 +29,11 @@ func MakeVerifyJWTUserTokenMiddleware(s services.UserTokenService) gin.HandlerFu
 
 		claims, err := s.Verify(token)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, endpoints.ErrorResponseFromError(err))
+			c.JSON(http.StatusUnauthorized, response.ErrorResponseFromError(err))
 			c.Abort()
 			return
 		}
 
-		c.Set(endpoints.UserClaimsKey, claims)
+		c.Set(UserClaimsKey, claims)
 	}
 }
