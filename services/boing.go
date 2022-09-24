@@ -48,7 +48,7 @@ func (s *boingService) GetById(id uint) (models.Boing, error) {
 		}
 	}
 
-	l.Info("boing found", "boingId", boing.Id)
+	l.Info("boing found", "boingId", boing.ID)
 	return boing, nil
 }
 
@@ -61,6 +61,6 @@ func (s *boingService) Create(text string, userId uint) error {
 		return ErrBoingCreationFailed
 	}
 
-	l.Info("boing created", "boingId", boing.Id)
+	l.Info("boing created", "boingId", boing.ID)
 	return nil
 }

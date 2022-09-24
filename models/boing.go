@@ -1,9 +1,12 @@
 package models
 
-import "time"
+import (
+	"gorm.io/gorm"
+	"time"
+)
 
 type Boing struct {
-	Id        uint      `gorm:"primary_key" json:"-"`
+	gorm.Model
 	Text      string    `json:"text"`
 	UserId    uint      `json:"-"`
 	CreatedAt time.Time `json:"createdAt"`

@@ -20,7 +20,7 @@ func TestBoingService_List(t *testing.T) {
 	rows := createBoingRows()
 
 	for _, boing := range boings {
-		rows = rows.AddRow(boing.Id, boing.Text, boing.UserId, boing.CreatedAt)
+		rows = rows.AddRow(boing.ID, boing.Text, boing.UserId, boing.CreatedAt)
 	}
 
 	mock.ExpectQuery("SELECT *").WillReturnRows(rows)
@@ -75,11 +75,11 @@ func TestBoingService_GetById(t *testing.T) {
 	boing := models.NewBoing("boing1", 0)
 
 	rows := createBoingRows()
-	rows.AddRow(boing.Id, boing.Text, boing.UserId, boing.CreatedAt)
+	rows.AddRow(boing.ID, boing.Text, boing.UserId, boing.CreatedAt)
 
 	mock.ExpectQuery("SELECT").WillReturnRows(rows)
 
-	boingResult, err := service.GetById(boing.Id)
+	boingResult, err := service.GetById(boing.ID)
 
 	assert.NoError(t, err)
 	assert.Equal(t, boingResult, boing)
