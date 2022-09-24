@@ -11,7 +11,7 @@ import (
 func TestBoingService_List(t *testing.T) {
 	service, mock := initBoingServiceWithMocks(t)
 
-	var boings = []models.Boing{
+	var boings = []*models.Boing{
 		models.NewBoing("boing1", 0),
 		models.NewBoing("boing2", 0),
 		models.NewBoing("boing3", 0),

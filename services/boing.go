@@ -13,8 +13,8 @@ var (
 )
 
 type BoingService interface {
-	List() ([]models.Boing, error)
-	GetById(id uint) (models.Boing, error)
+	List() ([]*models.Boing, error)
+	GetById(id uint) (*models.Boing, error)
 	Create(text string, userId uint) error
 }
 
@@ -27,29 +27,29 @@ func NewBoingService(db *gorm.DB, logger logger.Logger) BoingService {
 	return &boingService{db: db, log: logger}
 }
 
-func (s *boingService) List() ([]models.Boing, error) {
-	var boings []models.Boing
+func (s *boingService) List() ([]*models.Boing, error) {
+	var boings []*models.Boing
 	if err := s.db.Find(&boings).Error; err != nil {
 		return nil, ErrUnexpectedDBError
 	}
 	return boings, nil
 }
 
-func (s *boingService) GetById(id uint) (models.Boing, error) {
+func (s *boingService) GetById(id uint) (*models.Boing, error) {
 	var boing models.Boing
 	l := s.log.With("context", "boingService.GetById", "boingId", id)
 	if err := s.db.First(&boing, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			l.Info("boing not found")
-			return boing, ErrBoingNotFound
+			return nil, ErrBoingNotFound
 		} else {
 			l.Error("unexpected db error", "error", err)
-			return boing, ErrUnexpectedDBError
+			return nil, ErrUnexpectedDBError
 		}
 	}
 
 	l.Info("boing found", "boingId", boing.ID)
-	return boing, nil
+	return &boing, nil
 }
 
 func (s *boingService) Create(text string, userId uint) error {

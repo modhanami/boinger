@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/modhanami/boinger/endpoints/response"
 	"github.com/modhanami/boinger/endpoints/utils"
-	"github.com/modhanami/boinger/models"
 	"github.com/modhanami/boinger/services"
 	"net/http"
 	"strconv"
@@ -67,7 +66,7 @@ func MakeGetByIdEndpoint(s services.BoingService) gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, response.ErrorResponseFromError(err))
 			return
-		} else if boing == (models.Boing{}) {
+		} else if boing == nil {
 			c.JSON(http.StatusNotFound, response.NewErrorResponse("Boing not found"))
 			return
 		}
