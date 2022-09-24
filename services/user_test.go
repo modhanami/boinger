@@ -10,9 +10,9 @@ import (
 )
 
 func setupDBForUserService(t *testing.T) *gorm.DB {
-	gdb, err := testutils.InitInMemDB(t)
+	gdb := testutils.InitInMemDB(t)
 
-	err = gdb.AutoMigrate(&models.User{})
+	err := gdb.AutoMigrate(&models.User{})
 	if err != nil {
 		return nil
 	}

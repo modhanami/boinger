@@ -13,9 +13,9 @@ import (
 var InvalidCredentials = "invalid credentials"
 
 func setupDBForAuthService(t *testing.T) *gorm.DB {
-	gdb, err := testutils.InitInMemDB(t)
+	gdb := testutils.InitInMemDB(t)
 
-	err = gdb.AutoMigrate(&models.User{}, &models.RefreshToken{})
+	err := gdb.AutoMigrate(&models.User{}, &models.RefreshToken{})
 	if err != nil {
 		return nil
 	}

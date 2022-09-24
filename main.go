@@ -13,7 +13,6 @@ import (
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
 	log2 "log"
-	"net/http"
 	"os"
 )
 
@@ -37,28 +36,12 @@ func main() {
 	authGroup := router.Group("/auth")
 	authGroup.POST("/register", endpoints.MakeRegisterEndpoint(authService))
 	authGroup.POST("/login", endpoints.MakeLoginEndpoint(authService, userTokenService))
-	authGroup.GET("/user-info", userTokenMiddleware, endpoints.MakeUserInfoEndpoint())
+	authGroup.GET("/userinfo", userTokenMiddleware, endpoints.MakeUserInfoEndpoint())
 
 	router.GET("/boings", endpoints.MakeListEndpoint(boingService))
 	router.GET("/boings/:id", endpoints.MakeGetByIdEndpoint(boingService))
 	router.POST("/boings", userTokenMiddleware, endpoints.MakeCreateEndpoint(boingService, userService))
 	//router.GET("/timeline", endpoints.MakeTimelineEndpoint(timelineService))
-
-	router.POST("/dont-mind-me-boinging-around", userTokenMiddleware, func(c *gin.Context) {
-		rawUserClaims, exists := c.Get(endpoints.UserClaimsKey)
-		if !exists {
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-
-		userClaims, ok := rawUserClaims.(*services.UserClaims)
-		if !ok {
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-
-		c.JSON(http.StatusOK, userClaims)
-	})
 
 	port := getEnv("PORT", "30027")
 	address := "localhost:" + port

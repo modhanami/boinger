@@ -3,7 +3,7 @@ package endpoints
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/modhanami/boinger/endpoints/response"
-	"github.com/modhanami/boinger/middlewares"
+	"github.com/modhanami/boinger/endpoints/utils"
 	"github.com/modhanami/boinger/services"
 	"log"
 	"net/http"
@@ -19,13 +19,6 @@ var (
 type UserClaimsResponse struct {
 	ID       uint   `json:"id"`
 	Username string `json:"username"`
-}
-
-func NewUserClaimsResponseFromClaims(claims *services.UserClaims) *UserClaimsResponse {
-	return &UserClaimsResponse{
-		ID:       claims.ID,
-		Username: claims.Username,
-	}
 }
 
 type loginResponse struct {
@@ -91,13 +84,12 @@ func MakeRegisterEndpoint(s services.AuthService) gin.HandlerFunc {
 
 func MakeUserInfoEndpoint() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rawClaims, exists := c.Get(middlewares.UserClaimsKey)
-		if !exists {
-			c.Status(http.StatusInternalServerError)
+		userClaims := utils.GetUserClaimsFromContext(c)
+		if userClaims == nil {
+			c.Status(http.StatusUnauthorized)
 			return
 		}
 
-		claims := rawClaims.(*services.UserClaims)
-		c.JSON(http.StatusOK, NewUserClaimsResponseFromClaims(claims))
+		c.JSON(http.StatusOK, userClaims)
 	}
 }

@@ -6,10 +6,10 @@ import (
 	"testing"
 )
 
-func InitInMemDB(t *testing.T) (*gorm.DB, error) {
+func InitInMemDB(t *testing.T) *gorm.DB {
 	gdb, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
 	if err != nil {
-		t.Fail()
+		t.Fatal(err)
 	}
-	return gdb, err
+	return gdb
 }
