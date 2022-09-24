@@ -60,7 +60,7 @@ func parseFlagsAndEnvVars() {
 }
 
 func initDB() *gorm.DB {
-	db, err := gorm.Open(sqlite.Open("dev.db"), &gorm.Config{
+	db, err := gorm.Open(sqlite.Open("dev.db?_foreign_keys=true"), &gorm.Config{
 		Logger: gormlogger.Default.LogMode(gormlogger.Info),
 	})
 	if err != nil {

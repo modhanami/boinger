@@ -7,7 +7,7 @@ import (
 )
 
 func InitInMemDB(t *testing.T) *gorm.DB {
-	gdb, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
+	gdb, err := gorm.Open(sqlite.Open("file::memory:?_foreign_keys=true"), &gorm.Config{})
 	if err != nil {
 		t.Fatal(err)
 	}
