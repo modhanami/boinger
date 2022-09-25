@@ -3,10 +3,10 @@ package models
 import "time"
 
 type RefreshToken struct {
-	Id        uint `gorm:"primary_key"`
-	UserId    uint
+	Base
+	UserId    uint `gorm:"not null"`
 	User      User
-	Token     string
+	Token     string `gorm:"not null"`
 	RevokedAt *time.Time
 }
 

@@ -1,12 +1,10 @@
 package models
 
-import "gorm.io/gorm"
-
 type User struct {
-	gorm.Model
-	Username string `gorm:"not null;unique"`
-	Email    string `gorm:"not null;unique"`
-	Password string `gorm:"not null"`
+	Base
+	Username string `gorm:"not null;unique" json:"username"`
+	Email    string `gorm:"not null;unique" json:"email"`
+	Password string `gorm:"not null" json:"-"`
 }
 
 func (m *User) TableName() string {
