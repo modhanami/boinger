@@ -23,11 +23,13 @@ func main() {
 
 	baseLogger := logger.NewZapLogger()
 	boingServiceLogger := baseLogger.With("service", "boing")
+	commentHandlerLogger := baseLogger.With("handler", "comment")
 
 	userService := services.NewUserService(db, baseLogger)
 	boingService := services.NewBoingService(db, boingServiceLogger)
 	userTokenService := services.NewUserTokenService(db)
 	authService := services.NewAuthService(db, userService, userTokenService, hashers.NewBcryptHasher())
+	commentService := services.NewCommentService(db)
 	//timelineService := services.NewTimelineService(userService, boingService)
 
 	router := gin.Default()
@@ -41,6 +43,8 @@ func main() {
 	router.GET("/boings", endpoints.MakeListEndpoint(boingService))
 	router.GET("/boings/:id", endpoints.MakeGetByIdEndpoint(boingService))
 	router.POST("/boings", userTokenMiddleware, endpoints.MakeCreateEndpoint(boingService, userService))
+	commentHandler := endpoints.NewCommentHandler(commentService, commentHandlerLogger)
+	router.POST("/boings/:id/comments", userTokenMiddleware, commentHandler.Create)
 	//router.GET("/timeline", endpoints.MakeTimelineEndpoint(timelineService))
 
 	port := getEnv("PORT", "30027")
@@ -67,7 +71,7 @@ func initDB() *gorm.DB {
 		panic(err)
 	}
 
-	err = db.AutoMigrate(&models.Boing{}, &models.User{}, &models.RefreshToken{})
+	err = db.AutoMigrate(&models.Boing{}, &models.User{}, &models.RefreshToken{}, &models.Comment{})
 	if err != nil {
 		panic(err)
 	}
