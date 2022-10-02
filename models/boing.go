@@ -1,9 +1,10 @@
 package models
 
 type Boing struct {
-	Base
-	Text   string `json:"text"`
-	UserId uint   `json:"-"`
+	Model
+	Text     string    `json:"text"`
+	UserId   uint      `json:"-"`
+	Comments []Comment `json:"comments"`
 }
 
 func (m *Boing) TableName() string {

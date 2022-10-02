@@ -3,7 +3,7 @@ package models
 import "time"
 
 type RefreshToken struct {
-	Base
+	Model
 	UserId    uint `gorm:"not null"`
 	User      User
 	Token     string `gorm:"not null"`

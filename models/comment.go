@@ -1,11 +1,11 @@
 package models
 
 type Comment struct {
-	Base
-	BoingID uint `gorm:"not null" json:"boingId"`
-	Boing   Boing
-	UserID  uint `gorm:"not null" json:"userId"`
-	User    User
+	Model
+	BoingID uint   `gorm:"not null" json:"-"`
+	Boing   Boing  `json:"-"`
+	UserID  uint   `gorm:"not null" json:"-"`
+	User    User   `json:"-"`
 	Text    string `json:"text"`
 }
 
