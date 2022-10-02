@@ -3,7 +3,7 @@ package middlewares
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/modhanami/boinger/endpoints/response"
-	"github.com/modhanami/boinger/services"
+	"github.com/modhanami/boinger/services/tokens"
 	"net/http"
 	"strings"
 )
@@ -12,7 +12,7 @@ const (
 	UserClaimsKey = "userClaims"
 )
 
-func MakeVerifyJWTUserTokenMiddleware(s services.UserTokenService) gin.HandlerFunc {
+func MakeVerifyJWTUserTokenMiddleware(s tokens.UserTokenService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		header := c.GetHeader("Authorization")
 		if header == "" {

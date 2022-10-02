@@ -3,7 +3,7 @@ package utils
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/modhanami/boinger/middlewares"
-	"github.com/modhanami/boinger/services"
+	"github.com/modhanami/boinger/services/tokens"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -26,7 +26,7 @@ func TestGetUserClaimsFromContext(t *testing.T) {
 		},
 		{
 			name: "return user claims when user claims is user claims",
-			userClaims: &services.UserClaims{
+			userClaims: &tokens.UserClaims{
 				ID:       uint(123),
 				Username: "user123",
 			},

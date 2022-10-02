@@ -6,6 +6,7 @@ import (
 	"github.com/modhanami/boinger/endpoints/response"
 	"github.com/modhanami/boinger/endpoints/utils"
 	"github.com/modhanami/boinger/services"
+	"github.com/modhanami/boinger/services/tokens"
 	"log"
 	"net/http"
 	"time"
@@ -32,7 +33,7 @@ func NewLoginResponse(token string) *loginResponse {
 	}
 }
 
-func MakeLoginEndpoint(s services.AuthService, userTokenService services.UserTokenService) gin.HandlerFunc {
+func MakeLoginEndpoint(s services.AuthService, userTokenService tokens.UserTokenService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		username := c.PostForm("username")
 		password := c.PostForm("password")
@@ -42,7 +43,7 @@ func MakeLoginEndpoint(s services.AuthService, userTokenService services.UserTok
 			return
 		}
 
-		token, err := userTokenService.Create(user, services.CreateOptions{})
+		token, err := userTokenService.Create(user, tokens.CreateOptions{})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, response.ErrorResponseFromError(err))
 			return

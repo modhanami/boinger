@@ -1,16 +1,17 @@
 //go:build exclude
 
-package services
+package tokens
 
 import (
 	"github.com/modhanami/boinger/models"
+	"github.com/modhanami/boinger/services"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
 
 func TestCreateUserToken(t *testing.T) {
-	gdb := setupDBForAuthService(t)
+	gdb := services.setupDBForAuthService(t)
 	var user = &models.User{
 		Id:       123,
 		Uid:      "A1",
@@ -26,7 +27,7 @@ func TestCreateUserToken(t *testing.T) {
 }
 
 func TestVerifyValidUserToken(t *testing.T) {
-	gdb := setupDBForAuthService(t)
+	gdb := services.setupDBForAuthService(t)
 	var user = &models.User{
 		Id:       123,
 		Uid:      "A1",
@@ -47,7 +48,7 @@ func TestVerifyValidUserToken(t *testing.T) {
 }
 
 func TestFailVerifyExpiredUserToken(t *testing.T) {
-	gdb := setupDBForAuthService(t)
+	gdb := services.setupDBForAuthService(t)
 	var user = &models.User{
 		Id:       123,
 		Uid:      "A1",
@@ -64,7 +65,7 @@ func TestFailVerifyExpiredUserToken(t *testing.T) {
 }
 
 func TestRenewRefreshToken(t *testing.T) {
-	gdb := setupDBForAuthService(t)
+	gdb := services.setupDBForAuthService(t)
 	service := NewUserTokenService(gdb)
 	user := models.User{Uid: "uid1", Username: "user1", Password: "password1"}
 	gdb.Create(&user)
@@ -78,7 +79,7 @@ func TestRenewRefreshToken(t *testing.T) {
 }
 
 func TestRenewRefreshToken_RevokesOldRefreshToken(t *testing.T) {
-	gdb := setupDBForAuthService(t)
+	gdb := services.setupDBForAuthService(t)
 	service := NewUserTokenService(gdb)
 	user := models.User{Uid: "uid1", Username: "user1", Password: "password1"}
 	gdb.Create(&user)

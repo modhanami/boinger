@@ -5,6 +5,7 @@ import (
 	"github.com/modhanami/boinger/logger"
 	"github.com/modhanami/boinger/models"
 	"github.com/modhanami/boinger/services/testutils"
+	"github.com/modhanami/boinger/services/tokens"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"testing"
@@ -63,7 +64,7 @@ func TestAuthService_Authenticate(t *testing.T) {
 			gdb := setupDBForAuthService(t)
 			tt.seed(gdb)
 			userService := NewUserService(gdb, logger.NewNoopLogger())
-			tokenService := NewUserTokenService(gdb)
+			tokenService := tokens.NewUserTokenService(gdb)
 			service := NewAuthService(gdb, userService, tokenService, &fakePasswordHasher{})
 
 			user, err := service.Authenticate(tt.username, tt.password)
@@ -120,7 +121,7 @@ func TestAuthService_Register(t *testing.T) {
 			gdb := setupDBForAuthService(t)
 			tt.seed(gdb)
 			userService := NewUserService(gdb, logger.NewNoopLogger())
-			tokenService := NewUserTokenService(gdb)
+			tokenService := tokens.NewUserTokenService(gdb)
 			service := NewAuthService(gdb, userService, tokenService, &fakePasswordHasher{})
 
 			user, err := service.Register(tt.username, tt.email, tt.password)

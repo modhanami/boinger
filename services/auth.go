@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"github.com/modhanami/boinger/models"
+	"github.com/modhanami/boinger/services/tokens"
 	"gorm.io/gorm"
 )
 
@@ -18,7 +19,7 @@ type AuthService interface {
 type authService struct {
 	db               *gorm.DB
 	userService      UserService
-	userTokenService UserTokenService
+	userTokenService tokens.UserTokenService
 	passwordHasher   PasswordHasher
 }
 
@@ -27,7 +28,7 @@ type PasswordHasher interface {
 	ComparePassword(hashedPassword, password string) error
 }
 
-func NewAuthService(db *gorm.DB, userService UserService, userTokenService UserTokenService, passwordHasher PasswordHasher) AuthService {
+func NewAuthService(db *gorm.DB, userService UserService, userTokenService tokens.UserTokenService, passwordHasher PasswordHasher) AuthService {
 	return &authService{
 		db:               db,
 		userService:      userService,

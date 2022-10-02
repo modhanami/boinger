@@ -9,6 +9,7 @@ import (
 	"github.com/modhanami/boinger/middlewares"
 	"github.com/modhanami/boinger/models"
 	"github.com/modhanami/boinger/services"
+	"github.com/modhanami/boinger/services/tokens"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
@@ -27,7 +28,7 @@ func main() {
 
 	userService := services.NewUserService(db, baseLogger)
 	boingService := services.NewBoingService(db, boingServiceLogger)
-	userTokenService := services.NewUserTokenService(db)
+	userTokenService := tokens.NewUserTokenService(db)
 	authService := services.NewAuthService(db, userService, userTokenService, hashers.NewBcryptHasher())
 	commentService := services.NewCommentService(db)
 	//timelineService := services.NewTimelineService(userService, boingService)
@@ -45,6 +46,7 @@ func main() {
 	router.POST("/boings", userTokenMiddleware, endpoints.MakeCreateEndpoint(boingService, userService))
 	commentHandler := endpoints.NewCommentHandler(commentService, commentHandlerLogger)
 	router.POST("/boings/:id/comments", userTokenMiddleware, commentHandler.Create)
+	router.DELETE("/comments/:id", userTokenMiddleware, commentHandler.Delete)
 	//router.GET("/timeline", endpoints.MakeTimelineEndpoint(timelineService))
 
 	port := getEnv("PORT", "30027")
@@ -60,7 +62,7 @@ func parseFlagsAndEnvVars() {
 	if !exists {
 		log2.Fatalf("JWT_SECRET is not set")
 	}
-	services.JWTSecret = []byte(jwtSecret)
+	tokens.JWTSecret = []byte(jwtSecret)
 }
 
 func initDB() *gorm.DB {

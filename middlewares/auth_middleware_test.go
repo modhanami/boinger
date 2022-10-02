@@ -3,7 +3,7 @@ package middlewares
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/modhanami/boinger/services"
+	"github.com/modhanami/boinger/services/tokens"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -89,7 +89,7 @@ func TestVerifyJWTUserTokenMiddleware_SetUserClaimsInContext(t *testing.T) {
 	router.GET("/", userTokenMiddleware, func(c *gin.Context) {
 		raw, exists := c.Get(UserClaimsKey)
 		assert.True(t, exists)
-		claims := raw.(*services.UserClaims)
+		claims := raw.(*tokens.UserClaims)
 		assert.NotNil(t, claims)
 		c.Status(http.StatusOK)
 	})
@@ -122,13 +122,13 @@ func makeRouter() *gin.Engine {
 }
 
 type fakeUserTokenService struct {
-	services.UserTokenService
+	tokens.UserTokenService
 }
 
-func (m *fakeUserTokenService) Verify(token string) (*services.UserClaims, error) {
+func (m *fakeUserTokenService) Verify(token string) (*tokens.UserClaims, error) {
 	switch token {
 	case "valid":
-		return &services.UserClaims{}, nil
+		return &tokens.UserClaims{}, nil
 	case "expired":
 		return nil, fmt.Errorf("token is expired")
 	default:
