@@ -29,7 +29,7 @@ func NewBoingService(db *gorm.DB, logger logger.Logger) BoingService {
 
 func (s *boingService) List() ([]*models.Boing, error) {
 	var boings []*models.Boing
-	if err := s.db.Find(&boings).Error; err != nil {
+	if err := s.db.Preload("Comments").Find(&boings).Error; err != nil {
 		return nil, ErrUnexpectedDBError
 	}
 	return boings, nil
@@ -38,7 +38,7 @@ func (s *boingService) List() ([]*models.Boing, error) {
 func (s *boingService) GetById(id uint) (*models.Boing, error) {
 	var boing models.Boing
 	l := s.log.With("context", "boingService.GetById", "boingId", id)
-	if err := s.db.First(&boing, id).Error; err != nil {
+	if err := s.db.Preload("Comments").First(&boing, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			l.Info("boing not found")
 			return nil, ErrBoingNotFound
