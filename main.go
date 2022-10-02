@@ -31,7 +31,6 @@ func main() {
 	userTokenService := tokens.NewUserTokenService(db)
 	authService := services.NewAuthService(db, userService, userTokenService, hashers.NewBcryptHasher())
 	commentService := services.NewCommentService(db)
-	//timelineService := services.NewTimelineService(userService, boingService)
 
 	router := gin.Default()
 	userTokenMiddleware := middlewares.MakeVerifyJWTUserTokenMiddleware(userTokenService)
@@ -47,7 +46,6 @@ func main() {
 	commentHandler := endpoints.NewCommentHandler(commentService, commentHandlerLogger)
 	router.POST("/boings/:id/comments", userTokenMiddleware, commentHandler.Create)
 	router.DELETE("/comments/:id", userTokenMiddleware, commentHandler.Delete)
-	//router.GET("/timeline", endpoints.MakeTimelineEndpoint(timelineService))
 
 	port := getEnv("PORT", "30027")
 	address := "localhost:" + port
