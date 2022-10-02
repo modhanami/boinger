@@ -1,6 +1,7 @@
 package endpoints
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/modhanami/boinger/endpoints/response"
 	"github.com/modhanami/boinger/endpoints/utils"
@@ -71,7 +72,7 @@ func MakeRegisterEndpoint(s services.AuthService) gin.HandlerFunc {
 
 		_, err := s.Register(username, email, password)
 		if err != nil {
-			if err == services.ErrUserAlreadyExists {
+			if errors.Is(err, services.ErrUserAlreadyExists) {
 				c.JSON(http.StatusConflict, response.ErrorResponseFromError(err))
 				return
 			}

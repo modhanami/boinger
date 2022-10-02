@@ -39,7 +39,7 @@ func (s *boingService) GetById(id uint) (*models.Boing, error) {
 	var boing models.Boing
 	l := s.log.With("context", "boingService.GetById", "boingId", id)
 	if err := s.db.Preload("Comments").First(&boing, id).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			l.Info("boing not found")
 			return nil, ErrBoingNotFound
 		} else {

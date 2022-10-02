@@ -42,7 +42,7 @@ func (s *userService) Create(user *models.User) (*models.User, error) {
 func (s *userService) ExistsByUsername(username string) (bool, error) { // TODO: unexport this
 	var user models.User
 	if err := s.db.Where("username = ?", username).First(&user).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, nil
 		} else {
 			return false, err
@@ -56,7 +56,7 @@ func (s *userService) GetById(id uint) (*models.User, error) {
 	s.log.Info("getting user by username", "username", id)
 	var user models.User
 	if err := s.db.First(&user, id).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			s.log.Info("user not found", "username", id)
 			return &user, ErrUserNotFound
 		} else {
@@ -70,7 +70,7 @@ func (s *userService) GetByUsername(username string) (*models.User, error) {
 	s.log.Info("getting user by username", "username", username)
 	var user models.User
 	if err := s.db.Where("username = ?", username).First(&user).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			s.log.Info("user not found", "username", username)
 			return &user, ErrUserNotFound
 		} else {
