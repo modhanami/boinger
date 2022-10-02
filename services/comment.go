@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/modhanami/boinger/models"
+	"github.com/modhanami/boinger/services/common"
 	"github.com/modhanami/boinger/services/usercontext"
 	"gorm.io/gorm"
 )
@@ -44,11 +45,11 @@ func (s *commentService) Delete(user usercontext.UserContext, id uint) error {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ErrCommentNotFound
 		}
-		return ErrUnexpectedDBError
+		return common.ErrUnexpectedDBError
 	}
 
 	if comment.UserID != userId {
-		return ErrUserNotAuthorized
+		return common.ErrUserNotAuthorized
 	}
 
 	return s.db.Delete(&comment).Error

@@ -4,6 +4,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/modhanami/boinger/logger"
 	"github.com/modhanami/boinger/models"
+	"github.com/modhanami/boinger/services/common"
+	"github.com/modhanami/boinger/services/testutils"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -34,12 +36,12 @@ func TestBoingService_List(t *testing.T) {
 func TestBoingService_List_UnexpectedDBError(t *testing.T) {
 	service, mock := initBoingServiceWithMocks(t)
 
-	mock.ExpectQuery("SELECT").WillReturnError(ErrUnexpectedDBError)
+	mock.ExpectQuery("SELECT").WillReturnError(common.ErrUnexpectedDBError)
 
 	_, err := service.List()
 
 	assert.Error(t, err)
-	assert.Equal(t, err, ErrUnexpectedDBError)
+	assert.Equal(t, err, common.ErrUnexpectedDBError)
 }
 
 func TestBoingService_Create(t *testing.T) {
@@ -99,12 +101,12 @@ func TestBoingService_GetById_NotFound(t *testing.T) {
 func TestBoingService_GetById_UnexpectedDBError(t *testing.T) {
 	service, mock := initBoingServiceWithMocks(t)
 
-	mock.ExpectQuery("SELECT").WillReturnError(ErrUnexpectedDBError)
+	mock.ExpectQuery("SELECT").WillReturnError(common.ErrUnexpectedDBError)
 
 	_, err := service.GetById(1)
 
 	assert.Error(t, err)
-	assert.Equal(t, err, ErrUnexpectedDBError)
+	assert.Equal(t, err, common.ErrUnexpectedDBError)
 }
 
 func createBoingRows() *sqlmock.Rows {
@@ -114,6 +116,6 @@ func createBoingRows() *sqlmock.Rows {
 }
 
 func initBoingServiceWithMocks(t *testing.T) (BoingService, sqlmock.Sqlmock) {
-	db, mock := initMockDB(t)
+	db, mock := testutils.InitMockDB(t)
 	return NewBoingService(db, logger.NewNoopLogger()), mock
 }

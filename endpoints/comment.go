@@ -7,6 +7,7 @@ import (
 	"github.com/modhanami/boinger/endpoints/utils"
 	"github.com/modhanami/boinger/logger"
 	"github.com/modhanami/boinger/services"
+	"github.com/modhanami/boinger/services/common"
 	"github.com/modhanami/boinger/services/usercontext"
 	"net/http"
 	"strconv"
@@ -97,7 +98,7 @@ func (h *commentHandler) Delete(context *gin.Context) {
 			return
 		}
 
-		if errors.Is(err, services.ErrUserNotAuthorized) {
+		if errors.Is(err, common.ErrUserNotAuthorized) {
 			log.Debug("user not authorized")
 			context.Status(http.StatusForbidden)
 			return

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/modhanami/boinger/logger"
 	"github.com/modhanami/boinger/models"
+	"github.com/modhanami/boinger/services/common"
 	"gorm.io/gorm"
 )
 
@@ -30,7 +31,7 @@ func NewBoingService(db *gorm.DB, logger logger.Logger) BoingService {
 func (s *boingService) List() ([]*models.Boing, error) {
 	var boings []*models.Boing
 	if err := s.db.Preload("Comments").Find(&boings).Error; err != nil {
-		return nil, ErrUnexpectedDBError
+		return nil, common.ErrUnexpectedDBError
 	}
 	return boings, nil
 }
@@ -44,7 +45,7 @@ func (s *boingService) GetById(id uint) (*models.Boing, error) {
 			return nil, ErrBoingNotFound
 		} else {
 			l.Error("unexpected db error", "error", err)
-			return nil, ErrUnexpectedDBError
+			return nil, common.ErrUnexpectedDBError
 		}
 	}
 
